@@ -1,6 +1,6 @@
 # 🌿 Mint Arcade
 
-A light, mint-green collection of **12 mini games** you can play right in the browser —
+A light, mint-green collection of **22 mini games** you can play right in the browser —
 solo or with friends on the same screen. No build step, no dependencies.
 
 ## ▶ How to run
@@ -36,6 +36,19 @@ Or publish it free with **GitHub Pages**:
 | 🏓 Pong | 1–2 | W/S vs ↑/↓, or vs computer |
 | 💣 Minesweeper | 1 | easy / medium / hard fields |
 | 🔤 Hangman | 1–4 | animals / fruits / countries / mixed |
+| 🎲 Snakes & Ladders | 2–4 | dice race, climb ladders / dodge snakes |
+| 🧱 Tetris | 1 | rotate & drop, clear lines, levels up |
+| 🚢 Battleship | 2 | place fleet, fire to sink the rival |
+| ⬜ Dots & Boxes | 2–4 | close boxes to claim them |
+| 🎰 Yahtzee | 1–4 | roll 5 dice, bank the best category |
+| ⚫ Reversi | 1–2 | flank & flip discs (vs friend or computer) |
+| 🀄 Mahjong Solitaire | 1 | match free tile pairs to clear the layout |
+| 🏎️ Car Racer | 1 | dodge highway traffic at speed |
+| 🃏 Blackjack | 1–4 | hit or stand, beat the dealer to 21 |
+| 🀅 Mahjong (HK) | 1 | simplified 4-player mahjong vs computers |
+
+> Note: **Mahjong (HK)** is a simplified version — draw/discard with Pong/Kong/Chow and the
+> standard four-sets-plus-a-pair win, but no flowers and no faan scoring (first valid hand wins).
 
 ## 🧩 Adding your own game
 
