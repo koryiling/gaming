@@ -1,6 +1,6 @@
 # 🌿 Mint Arcade
 
-A light, mint-green collection of **25 mini games** you can play right in the browser —
+A light, mint-green collection of **30 mini games** you can play right in the browser —
 solo or with friends on the same screen. No build step, no dependencies.
 
 ## ▶ How to run
@@ -50,6 +50,11 @@ Or publish it free with **GitHub Pages**:
 | 🕵️ Mastermind | 1 | crack the hidden colour code from clues |
 | 🔤 Word Master | 1 | Wordle-style: green/yellow letter hints |
 | 🔢 Sudoku | 1 | 9×9 number puzzle, easy/medium/hard |
+| ♟️ Checkers | 2 | jump & capture, crown your kings |
+| 🔵 Five in a Row | 1–2 | Gomoku — line up five (vs friend or computer) |
+| 🧱 Breakout | 1 | bounce the ball, smash all the bricks |
+| 🐤 Flappy | 1 | one-tap flapping through the pipes |
+| 🎲 Pig (Dice) | 2–4 | push-your-luck dice race to the target |
 
 > Note: **Mahjong (HK)** is a simplified version — draw/discard with Pong/Kong/Chow and the
 > standard four-sets-plus-a-pair win, but no flowers and no faan scoring (first valid hand wins).
