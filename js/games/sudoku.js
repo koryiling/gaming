@@ -10,12 +10,13 @@ Arcade.register({
   tags: ["Number", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "time" }, // fastest correct solve wins; each hint adds +10s
   rules: [
     "Tap a cell, then tap a number (or press 1–9) to place it.",
     "Selecting a cell highlights its row, column, box and every matching number.",
     "Each row, column, and 3×3 box must contain 1–9 with no repeats — clashes flash red.",
     "✏️ Notes lets you pencil in candidates; 💡 Hint reveals one correct cell.",
-    "Fill the whole grid correctly to win!",
+    "You're on the clock — each 💡 hint adds +10s. The fastest correct solve tops the board!",
   ],
   options: [
     { key: "diff", label: "Difficulty", type: "select", default: "easy",
@@ -72,6 +73,10 @@ Arcade.register({
     const notes = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set()));
     const hinted = Array.from({ length: 9 }, () => Array(9).fill(false));
     let sel = null, over = false, noteMode = false, hints = 0;
+    const HINT_PENALTY = 10; // seconds added to your time per hint used
+    let t0 = 0, tick = null, finalElapsed = 0;
+    function elapsedSec() { return Math.max(0, Math.round((performance.now() - t0) / 1000)); }
+    function fmt(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
 
     // ---- layout ----
     // size the grid so the whole board + number pad fit small screens too
@@ -196,23 +201,29 @@ Arcade.register({
       hinted[r][c] = true;
       hints++;
       sel = [r, c];
-      api.toast("💡 Revealed " + solution[r][c] + " (hints: " + hints + ")");
+      api.toast("💡 Revealed " + solution[r][c] + " (hints: " + hints + ", +" + HINT_PENALTY + "s)");
       render(); scoreboard(); checkWin();
     }
 
     function checkWin() {
       for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) { if (!grid[r][c] || conflictsAt(r, c)) return scoreboard(); }
       over = true;
-      api.setStatus("🎉 Solved with " + hints + " hint" + (hints === 1 ? "" : "s") + "! Beautiful logic, " + api.config.username + ". Restart for a new puzzle.");
+      finalElapsed = elapsedSec();
+      if (tick) { clearInterval(tick); tick = null; }
+      const penalty = hints * HINT_PENALTY;
+      const total = finalElapsed + penalty;
+      api.submitScore(total); // time-metric leaderboard: fastest correct solve wins
       scoreboard();
+      const penaltyMsg = hints ? " + " + penalty + "s for " + hints + " hint" + (hints === 1 ? "" : "s") + " = " + fmt(total) : "";
+      api.setStatus("🎉 Solved in " + fmt(finalElapsed) + penaltyMsg + "! Nice work, " + api.config.username + ". Restart for a new puzzle.");
     }
 
     function scoreboard() {
-      let filled = 0; grid.forEach((row) => row.forEach((v) => v && filled++));
+      const elapsed = over ? finalElapsed : elapsedSec();
       api.setScores([
-        { name: "Filled", value: filled + "/81", color: "#2e9d6c" },
+        { name: "Time", value: fmt(elapsed), color: "#2e9d6c" },
         { name: "Difficulty", value: api.config.options.diff, color: "#e67e22" },
-        { name: "Hints", value: hints, color: "#3498db" },
+        { name: "Hints", value: String(hints) + (hints ? " (+" + hints * HINT_PENALTY + "s)" : ""), color: "#3498db" },
       ]);
     }
 
@@ -232,8 +243,10 @@ Arcade.register({
     }
     window.addEventListener("keydown", onKey);
 
+    t0 = performance.now();
+    tick = setInterval(() => { if (!over) scoreboard(); }, 1000);
     render(); scoreboard();
-    api.setStatus("Tap a cell, then a number. ✏️ Notes pencils candidates · 💡 Hint reveals a cell 🔢");
-    return { stop() { window.removeEventListener("keydown", onKey); } };
+    api.setStatus("Tap a cell, then a number. ✏️ Notes pencils candidates · 💡 Hint reveals a cell (+" + HINT_PENALTY + "s) 🔢");
+    return { stop() { window.removeEventListener("keydown", onKey); if (tick) { clearInterval(tick); tick = null; } } };
   },
 });

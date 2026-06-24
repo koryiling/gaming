@@ -2,7 +2,7 @@
  * Mint Arcade — global leaderboard API (Cloudflare Worker + KV)
  *
  * Routes:
- *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins>
+ *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins|time>
  *        → { top: [ { name, score, ts }, ... up to 10 ] }
  *          ts = when the player achieved it (best-score time, or latest win)
  *   POST /scores   body: { game, name, score }  or  { game, name, win: 1 }
@@ -42,30 +42,32 @@ export default {
     if (request.method === "GET") {
       const game = (url.searchParams.get("game") || "").slice(0, 40);
       const win = url.searchParams.get("window") || "all";
-      const metric = url.searchParams.get("metric") === "wins" ? "wins" : "score";
+      const m = url.searchParams.get("metric");
+      const metric = m === "wins" ? "wins" : m === "time" ? "time" : "score";
       if (!game) return json({ error: "missing game" }, 400);
 
       const raw = await kv.get("game:" + game);
       const events = raw ? JSON.parse(raw) : [];
       const span = SPANS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
+      const lower = metric === "time"; // lower is better — keep each player's fastest
 
       const agg = Object.create(null);
       for (const e of events) {
         if ((e.t || 0) < cutoff) continue;
-        const a = agg[e.n] || (agg[e.n] = { score: 0, ts: 0 });
+        const a = agg[e.n] || (agg[e.n] = { score: 0, ts: 0, set: false });
         if (metric === "wins") {
           a.score += (e.w || 0);
           if (e.w && (e.t || 0) > a.ts) a.ts = e.t || 0; // most recent win
         } else {
           const s = Number(e.s) || 0;
-          if (s > a.score || a.ts === 0) { a.score = s; a.ts = e.t || 0; } // time of the best score
+          if (lower ? (!a.set || s < a.score) : (s > a.score || !a.set)) { a.score = s; a.ts = e.t || 0; a.set = true; }
         }
       }
       const top = Object.keys(agg)
         .map((n) => ({ name: n, score: agg[n].score, ts: agg[n].ts }))
-        .filter((r) => (metric === "wins" ? r.score > 0 : true))
-        .sort((a, b) => b.score - a.score)
+        .filter((r) => (metric === "wins" ? r.score > 0 : (lower ? r.score > 0 : true)))
+        .sort((a, b) => (lower ? a.score - b.score : b.score - a.score))
         .slice(0, 10);
       return json({ top });
     }

@@ -59,26 +59,28 @@
       if (list.length > 1000) d[gameId] = list.slice(-1000);
       this.save(d);
     },
-    // top `limit` within a time window; metric "wins" sums wins, otherwise max score per player.
-    // each row also carries `ts` — when the player achieved it (best-score time, or latest win).
+    // top `limit` within a time window. metric "wins" sums wins; "time" keeps each
+    // player's fastest (lowest, lower-is-better); otherwise max score per player.
+    // each row also carries `ts` — when the player achieved it (best value's time, or latest win).
     top(gameId, win, metric, limit) {
       const span = WINDOWS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
       const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff);
+      const lower = metric === "time"; // lower is better — keep the fastest
       const agg = {};
       events.forEach((e) => {
-        const a = agg[e.name] || (agg[e.name] = { score: 0, ts: 0 });
+        const a = agg[e.name] || (agg[e.name] = { score: 0, ts: 0, set: false });
         if (metric === "wins") {
           a.score += (e.win || 0);
           if (e.win && (e.ts || 0) > a.ts) a.ts = e.ts || 0; // most recent win
         } else {
           const s = Number(e.score) || 0;
-          if (s > a.score || a.ts === 0) { a.score = s; a.ts = e.ts || 0; } // time of the best score
+          if (lower ? (!a.set || s < a.score) : (s > a.score || !a.set)) { a.score = s; a.ts = e.ts || 0; a.set = true; }
         }
       });
       return Object.keys(agg).map((name) => ({ name, score: agg[name].score, ts: agg[name].ts }))
-        .filter((r) => (metric === "wins" ? r.score > 0 : true))
-        .sort((a, b) => b.score - a.score).slice(0, limit || 50);
+        .filter((r) => (metric === "wins" ? r.score > 0 : (lower ? r.score > 0 : true)))
+        .sort((a, b) => (lower ? a.score - b.score : b.score - a.score)).slice(0, limit || 50);
     },
     // overall ranking: each player's best-per-game value averaged across all games played
     overall(win, limit) {
@@ -88,6 +90,7 @@
       const sums = {};
       Object.keys(all).forEach((gameId) => {
         const metric = gameMetric(gameId);
+        if (metric === "time") return; // time games use seconds (lower=better) — skip the cross-game average
         const best = {};
         (all[gameId] || []).filter((e) => (e.ts || 0) >= cutoff).forEach((e) => {
           const b = best[e.name] || (best[e.name] = { v: 0, ts: 0 });
@@ -597,6 +600,12 @@
   }
 
   /* ---------- leaderboard rendering ---------- */
+  // format a duration in seconds as m:ss (used by time-metric leaderboards, e.g. Sudoku)
+  function fmtTime(sec) {
+    sec = Math.max(0, Math.round(Number(sec) || 0));
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
   // format an achievement timestamp into a short, locale-aware "when" label
   function fmtWhen(ts) {
     if (!ts) return "";
@@ -632,7 +641,9 @@
         nameWrap.appendChild(w);
       }
       row.appendChild(nameWrap);
-      const val = metric === "wins" ? e.score + " " + (e.score === 1 ? T("win") : T("wins")) : String(e.score);
+      const val = metric === "wins" ? e.score + " " + (e.score === 1 ? T("win") : T("wins"))
+        : metric === "time" ? fmtTime(e.score)
+        : String(e.score);
       row.appendChild(el("span", "lb-score", val));
       ol.appendChild(row);
     });
@@ -742,7 +753,9 @@
     const metric = gameMetric(def.id);
     const show = (top) => {
       banner.textContent = top
-        ? (metric === "wins" ? T("recordWins", { name: top.name, n: top.score }) : T("recordScore", { name: top.name, score: top.score }))
+        ? (metric === "wins" ? T("recordWins", { name: top.name, n: top.score })
+          : metric === "time" ? T("recordTime", { name: top.name, time: fmtTime(top.score) })
+          : T("recordScore", { name: top.name, score: top.score }))
         : T("noRecord");
     };
     if (lbScope === "global" && globalURL()) {
