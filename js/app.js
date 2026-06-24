@@ -769,6 +769,14 @@
   function renderGameLB() {
     const def = state.current;
     if (!def) return;
+    // games with leaderboard:false are just-for-fun — hide the panel and the record banner entirely
+    const lbPanel = $("#game-lb");
+    if (def.leaderboard === false) {
+      if (lbPanel) lbPanel.hidden = true;
+      $("#record-banner").hidden = true;
+      return;
+    }
+    if (lbPanel) lbPanel.hidden = false;
     $("#game-lb-title").textContent = T("top10", { name: gameText(def).name });
     fillLBList($("#game-lb-list"), def.id, T("beFirst"), 10);
     applyLBSide();

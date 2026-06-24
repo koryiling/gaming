@@ -1,12 +1,13 @@
 /* Blackjack — 1 to 4 players vs the dealer, hot-seat */
 Arcade.register({
   id: "blackjack",
-  name: "Blackjack",
-  emoji: "🃏",
+  name: "21",
+  emoji: "🂡",
   tagline: "Beat the dealer to 21 — but don't go bust. Hit or stand?",
   tags: ["Cards", "Family"],
   minPlayers: 1,
   maxPlayers: 4,
+  leaderboard: false, // just for fun — no leaderboard
   rules: [
     "Get your hand as close to 21 as possible without going over.",
     "Number cards = face value, J/Q/K = 10, Ace = 11 or 1 (whichever helps).",
@@ -25,10 +26,17 @@ Arcade.register({
     const wins = names.map(() => 0), losses = names.map(() => 0);
     let shoe, dealer, hands, cur, phase;
 
-    const dealerEl = api.el("div", ""); dealerEl.style.cssText = "text-align:center;margin-bottom:14px";
+    // felt card table for a more lively look
+    const table = api.el("div", "");
+    table.style.cssText = "background:radial-gradient(circle at 50% 0%, #1f8a5b, #0e573a 78%);border:6px solid #6b4423;" +
+      "border-radius:26px;padding:18px 16px 20px;box-shadow:var(--shadow-lg);width:100%;max-width:560px;margin:0 auto";
+    const title = api.el("div", "", "♠ ♥ &nbsp;Twenty&#8209;One&nbsp; ♦ ♣");
+    title.style.cssText = "text-align:center;color:#fff;font-weight:800;letter-spacing:3px;font-size:15px;opacity:.85;margin-bottom:12px";
+    const dealerEl = api.el("div", ""); dealerEl.style.cssText = "text-align:center;margin-bottom:14px;color:#eafff4";
     const playersEl = api.el("div", ""); playersEl.style.cssText = "display:flex;flex-direction:column;gap:12px;align-items:center";
     const controls = api.el("div", ""); controls.style.cssText = "text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center";
-    api.board.appendChild(dealerEl); api.board.appendChild(playersEl); api.board.appendChild(controls);
+    table.appendChild(title); table.appendChild(dealerEl); table.appendChild(playersEl); table.appendChild(controls);
+    api.board.appendChild(table);
 
     function buildShoe() {
       shoe = [];

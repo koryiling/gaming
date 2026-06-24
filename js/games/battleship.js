@@ -7,20 +7,20 @@ Arcade.register({
   tags: ["Board", "Strategy", "Duel"],
   minPlayers: 2,
   maxPlayers: 4,
-  leaderboard: { type: "wins" },
+  leaderboard: { type: "low" }, // fewest shots to finish ranks highest (per game, not summed)
   rules: [
     "Each captain places a fleet on their own sea (rivals, look away!).",
     "Players fire in a ring: P1 → P2 → P3 → P4 → back to P1.",
     "Click a square to fire — 🔥 hit, 💧 miss. A hit lets you fire again.",
     "Sink a rival's whole fleet to knock them out. Last captain afloat wins!",
-    "Each win is tallied on the leaderboard — keep winning to climb.",
+    "The fewer total shots the game takes, the higher it ranks on the leaderboard.",
   ],
   options: [
-    { key: "board", label: "Board size", type: "select", default: "big",
+    { key: "board", label: "Board size", type: "select", default: "mid",
       choices: [
-        { label: "Small (8×8)", value: "small" },
-        { label: "Big (10×10)", value: "big" },
-        { label: "Huge (13×13)", value: "huge" },
+        { label: "Small (5×5)", value: "small" },
+        { label: "Medium (6×6)", value: "mid" },
+        { label: "Big (8×8)", value: "big" },
       ] },
     { key: "fleet", label: "Fleet", type: "select", default: "classic",
       choices: [{ label: "Classic (5,4,3,3,2)", value: "classic" }, { label: "Small (4,3,2)", value: "small" }] },
@@ -28,7 +28,7 @@ Arcade.register({
 
   create(api) {
     const opt = api.config.options;
-    const N = opt.board === "small" ? 8 : opt.board === "huge" ? 13 : 10;
+    const N = opt.board === "small" ? 5 : opt.board === "big" ? 8 : 6;
     const SIZES = opt.fleet === "small" ? [4, 3, 2] : [5, 4, 3, 3, 2];
     const names = api.config.players;
     const P = names.length;
@@ -53,12 +53,14 @@ Arcade.register({
     function autoFill(b) {
       for (let i = b.ships.length; i < SIZES.length; i++) {
         const size = SIZES[i];
-        for (;;) {
+        let placed = false;
+        for (let tries = 0; tries < 1500 && !placed; tries++) {
           const horiz = Math.random() < 0.5;
           const r = (Math.random() * (horiz ? N : N - size + 1)) | 0;
           const c = (Math.random() * (horiz ? N - size + 1 : N)) | 0;
-          if (tryPlace(b, size, r, c, horiz)) break;
+          if (tryPlace(b, size, r, c, horiz)) placed = true;
         }
+        if (!placed) { api.toast("Couldn't auto-place the fleet — pick a smaller fleet or bigger board."); return; }
       }
     }
 
@@ -67,6 +69,7 @@ Arcade.register({
 
     let phase = "setup", setupP = 0, turn = 0, over = false;
     let horiz = true; // current placement orientation during setup
+    let totalShots = 0, t0 = 0; // shots fired this game + play start time, for the fewest-shots leaderboard
     const grid = api.el("div", "grid-board");
     grid.style.gridTemplateColumns = "repeat(" + N + ",1fr)";
     const gate = api.el("div", "");
@@ -175,7 +178,7 @@ Arcade.register({
       document.getElementById("bs-ready").addEventListener("click", () => {
         if (boards[setupP].ships.length !== SIZES.length) return;
         if (setupP < P - 1) { setupP++; setupGate(); }
-        else { phase = "play"; turn = 0; playGate(); }
+        else { phase = "play"; turn = 0; t0 = performance.now(); playGate(); }
         score();
       });
       score();
@@ -209,6 +212,7 @@ Arcade.register({
       const enemy = boards[tgt];
       const key = r + "," + c;
       if (enemy.shots[key]) return;
+      totalShots++;
       const idx = enemy.occ[key];
       if (idx != null) {
         enemy.shots[key] = "hit";
@@ -219,9 +223,10 @@ Arcade.register({
             alive[tgt] = false;
             if (aliveCount() <= 1) {
               over = true;
-              api.recordWin(names[turn]);
+              const secs = Math.round((performance.now() - t0) / 1000);
+              if (api.submitScore) api.submitScore(totalShots); // fewest shots to finish ranks highest
               renderPlay(); score();
-              api.setStatus("🏆 " + names[turn] + " is the last captain afloat — victory! 🎉 (win recorded)");
+              api.setStatus("🏆 " + names[turn] + " wins — fleet sunk in <b>" + totalShots + "</b> shots, " + secs + "s! 🎉 Fewer shots ranks higher.");
               return;
             }
             renderPlay(); score();

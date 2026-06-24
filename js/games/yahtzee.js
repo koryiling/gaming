@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Dice", "Family", "Strategy"],
   minPlayers: 1,
   maxPlayers: 4,
+  leaderboard: { type: "score" }, // highest total in one game ranks highest → lowest (not summed)
   rules: [
     "Each turn: roll all 5 dice, then re-roll any dice up to 2 more times.",
     "Tap a die to HOLD it between rolls.",
@@ -29,8 +30,6 @@ Arcade.register({
       { key: "full", name: "Full House", fn: (d) => (isFullHouse(d) ? 25 : 0) },
       { key: "sm", name: "Small Straight", fn: (d) => (straight(d) >= 4 ? 30 : 0) },
       { key: "lg", name: "Large Straight", fn: (d) => (straight(d) === 5 ? 40 : 0) },
-      { key: "yah", name: "YAHTZEE", fn: (d) => (maxCount(d) === 5 ? 50 : 0) },
-      { key: "chance", name: "Chance", fn: (d) => sum(d) },
     ];
     function sum(a) { return a.reduce((x, y) => x + y, 0); }
     function counts(d) { const c = {}; d.forEach((x) => (c[x] = (c[x] || 0) + 1)); return c; }
@@ -158,6 +157,7 @@ Arcade.register({
       const tot = names.map((_, i) => totals(i).total);
       const max = Math.max(...tot);
       const champs = names.filter((_, i) => tot[i] === max);
+      if (api.submitScore) api.submitScore(max); // highest total of the game ranks on the board
       renderCard();
       api.setStatus(names.length === 1
         ? "🎉 Final score: <b>" + tot[0] + "</b>, " + names[0] + "!"

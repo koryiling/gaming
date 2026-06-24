@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Board", "Strategy", "Family"],
   minPlayers: 2,
   maxPlayers: 4,
+  leaderboard: { type: "wins" }, // counts wins; each victory adds one
   rules: [
     "On your turn, draw one line between two adjacent dots.",
     "Complete the 4th side of a box → you claim it (your colour) and take another turn.",
@@ -106,6 +107,7 @@ Arcade.register({
       over = true; board();
       const max = Math.max(...scores);
       const champs = names.filter((_, i) => scores[i] === max);
+      if (api.recordWin) champs.forEach((n) => api.recordWin(n)); // record each winner (ties give all a win)
       api.setStatus(champs.length > 1
         ? "🤝 It's a tie at " + max + " boxes between " + champs.join(" & ") + "!"
         : "🏆 " + champs[0] + " wins with " + max + " boxes! 🎉");

@@ -7,11 +7,12 @@ Arcade.register({
   tags: ["Arcade", "Reflex", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // longest survival time (seconds) ranks highest; per game, not summed
   rules: [
     "Steer with ← / → (or A / D) to dodge oncoming cars.",
-    "↑ / ↓ speeds up or slows down — faster means more points but less reaction time.",
+    "↑ / ↓ speeds up or slows down — the pace also climbs slowly on its own.",
     "Crashing into traffic ends the run.",
-    "Survive as long as you can to rack up distance!",
+    "Survive as long as you can — your longest time tops the leaderboard!",
   ],
   options: [
     { key: "traffic", label: "Traffic", type: "select", default: "normal",
@@ -30,7 +31,8 @@ Arcade.register({
     const ctx = canvas.getContext("2d");
 
     const night = api.config.options.night;
-    const spawnGap = { light: 1500, normal: 1000, heavy: 650 }[api.config.options.traffic];
+    // wider gaps than before so there's room to react before the next car
+    const spawnGap = { light: 2000, normal: 1450, heavy: 1050 }[api.config.options.traffic];
     const ENEMY = ["🚙", "🚕", "🚐", "🚚", "🚓"];
 
     let px, baseSpeed, speed, enemies, score, alive, best = 0;
@@ -38,14 +40,15 @@ Arcade.register({
     const keys = {};
 
     function reset() {
-      px = W / 2 - laneW * 0.3; baseSpeed = 4; speed = baseSpeed;
-      enemies = []; score = 0; alive = true; lastSpawn = 0; roadY = 0;
+      px = W / 2 - laneW * 0.3; baseSpeed = 3; speed = baseSpeed; // starts gentle, ramps up
+      enemies = []; score = 0; alive = true; lastSpawn = 0; roadY = 0; t = 0;
       updateScore();
       api.setStatus("← → steer · ↑ ↓ speed. Don't crash! 🏁");
     }
     function updateScore() {
-      api.setScores([{ name: api.config.username, value: Math.floor(score), color: "#2e9d6c" },
-        { name: "Best", value: best, color: "#e67e22" }, { name: "Speed", value: Math.round(speed) + "x", color: "#3498db" }]);
+      const secs = Math.floor(t / 1000);
+      api.setScores([{ name: api.config.username, value: secs + "s", color: "#2e9d6c" },
+        { name: "Best", value: best + "s", color: "#e67e22" }, { name: "Speed", value: Math.round(speed) + "x", color: "#3498db" }]);
     }
     const carW = laneW * 0.62, carH = carW * 1.7;
 
@@ -53,7 +56,7 @@ Arcade.register({
       const lane = (Math.random() * LANES) | 0;
       const x = lane * laneW + (laneW - carW) / 2;
       // avoid spawning overlapping a recent same-lane car
-      if (enemies.some((e) => e.lane === lane && e.y < carH * 1.6)) return;
+      if (enemies.some((e) => e.lane === lane && e.y < carH * 2.4)) return;
       enemies.push({ x, y: -carH, lane, sym: ENEMY[(Math.random() * ENEMY.length) | 0] });
     }
     function step(dt) {
@@ -64,8 +67,8 @@ Arcade.register({
       if (keys.up) speed = Math.min(11, speed + 0.12);
       if (keys.down) speed = Math.max(2.5, speed - 0.18);
       px = Math.max(4, Math.min(W - carW - 4, px));
-      // natural speed creep
-      speed += 0.0008 * dt;
+      // natural speed creep — slow to fast over the run (capped)
+      speed = Math.min(11, speed + 0.0013 * dt);
       roadY = (roadY + speed) % 60;
       if (t - lastSpawn > spawnGap / (speed / baseSpeed)) { spawn(); lastSpawn = t; }
       enemies.forEach((e) => (e.y += speed));
@@ -80,8 +83,11 @@ Arcade.register({
       draw();
     }
     function crash() {
-      alive = false; best = Math.max(best, Math.floor(score)); updateScore();
-      api.setStatus("💥 Crash! Distance <b>" + Math.floor(score) + "</b>. Press <b>Space</b> or Restart to drive again.");
+      alive = false;
+      const secs = Math.floor(t / 1000);
+      best = Math.max(best, secs); updateScore();
+      if (api.submitScore) api.submitScore(secs); // longest survival time ranks highest
+      api.setStatus("💥 Crash! You survived <b>" + secs + "s</b>. Press <b>Space</b> or Restart to drive again.");
       draw();
     }
     function draw() {
