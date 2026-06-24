@@ -13,7 +13,7 @@ Arcade.register({
     "Fill an entire row to clear it and score points.",
     "Clearing several rows at once scores much more.",
     "The blocks speed up as you level up. Don't reach the top!",
-    "⏸️ Pause (or press P) to stop the game and pick up right where you left off.",
+    "⏸️ Pause (or press P) to stop. A paused game is saved for your username — even after a refresh you can come back and continue.",
   ],
   options: [
     { key: "level", label: "Start level", type: "select", default: 1,
@@ -63,8 +63,32 @@ Arcade.register({
 
     let grid, piece, next, score, lines, level, over, paused, dropT = null;
     const startLevel = api.config.options.level;
+    // A paused game is persisted per-username, so each player keeps their own progress:
+    // whoever paused can resume on next visit; everyone else starts a normal fresh game.
+    const SAVE_KEY = "mint_tetris_save:" + (api.config.username || "guest");
+
+    function saveState() {
+      if (over || !paused) return; // only a *paused* game is persisted
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify({ grid, piece, next, score, lines, level }));
+      } catch (e) {}
+    }
+    function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+    function loadState() {
+      let s;
+      try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return false; }
+      if (!s || !Array.isArray(s.grid) || s.grid.length !== ROWS || !s.piece || !SHAPES[s.next]) return false;
+      grid = s.grid; piece = s.piece; next = s.next;
+      score = s.score; lines = s.lines; level = s.level;
+      over = false; paused = true; // restore paused so the player resumes deliberately
+      pauseBtn.textContent = "▶️ Resume";
+      drawNext(); updateScore();
+      api.setStatus("▶️ Saved game restored — press Resume (or P) to continue.");
+      return true;
+    }
 
     function reset() {
+      clearSave();
       grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
       score = 0; lines = 0; level = startLevel; over = false; paused = false;
       pauseBtn.textContent = "⏸️ Pause";
@@ -149,9 +173,11 @@ Arcade.register({
       if (paused) {
         if (dropT) { clearInterval(dropT); dropT = null; }
         pauseBtn.textContent = "▶️ Resume";
-        api.setStatus("⏸️ Paused — press Resume (or P) to continue.");
+        saveState(); // snapshot now so a refresh can resume this player's game
+        api.setStatus("⏸️ Paused — press Resume (or P) to continue. Your progress is saved if you leave.");
       } else {
         pauseBtn.textContent = "⏸️ Pause";
+        clearSave(); // a live game isn't resumable; only paused games persist
         setSpeed();
         api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop · P pause");
         canvas.focus();
@@ -160,6 +186,7 @@ Arcade.register({
     }
     function gameOver() {
       over = true; if (dropT) clearInterval(dropT);
+      clearSave();
       api.setStatus("💥 Game over — score <b>" + score + "</b>, " + lines + " lines. Hit Restart to retry.");
     }
     function draw() {
@@ -223,7 +250,8 @@ Arcade.register({
       col.appendChild(bar);
     }
 
-    reset(); draw(); canvas.focus();
+    if (!loadState()) reset();
+    draw(); canvas.focus();
     return { stop() { if (dropT) clearInterval(dropT); window.removeEventListener("keydown", onKey); } };
   },
 });
