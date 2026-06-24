@@ -98,7 +98,11 @@ Arcade.register({
       grid = g;
       if (JSON.stringify(grid) !== before) { addTile(); draw(); }
       if (won) { over = true; api.setStatus("🎉 You reached " + goal + "! Keep going via Restart."); return; }
-      if (!canMove()) { over = true; api.setStatus("💥 No moves left — final score <b>" + score + "</b>. Restart to retry."); }
+      if (!canMove()) {
+        over = true;
+        if (api.submitScore) api.submitScore(score); // bank the final score to the leaderboard
+        api.setStatus("💥 No moves left — final score <b>" + score + "</b> saved to the leaderboard 🏆. Restart to retry.");
+      }
     }
     function canMove() {
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {

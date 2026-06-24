@@ -421,6 +421,7 @@
       setStatus: (html) => ($("#status-line").innerHTML = html),
       setScores: renderScores,
       recordWin: (name) => recordWinFor(state.current && state.current.id, name),
+      submitScore: (value) => recordScoreFor(state.current && state.current.id, value),
       toast,
       colors: PALETTE,
       el,
@@ -535,6 +536,17 @@
     if (!gameId || !name) return;
     board.log(gameId, { name: name, win: 1 });
     postGlobal(gameId, { name: name, win: 1 });
+    renderGameLB();
+  }
+
+  // games may call api.submitScore(value) to bank a score immediately (e.g. on game over)
+  function recordScoreFor(gameId, value) {
+    if (!gameId || !Number.isFinite(value)) return;
+    const name = state.config && state.config.username;
+    if (!name) return;
+    board.log(gameId, { name: name, score: value });
+    postGlobal(gameId, { name: name, score: value });
+    delete sessionScores[name]; // already banked — avoid double-logging at session end
     renderGameLB();
   }
 
