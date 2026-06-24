@@ -1,6 +1,7 @@
 /* Code Crack — crack a secret code of distinct digits.
  * Feedback is shown with coloured tiles (no words):
  *   🟨 yellow = right digit, right place · 🟩 green = right digit, wrong place · ⬜ grey = not in code.
+ * Submitted guesses move into a scrolling history panel on the left so they stay visible.
  * Enter digits by tapping the on-screen keypad or typing on a keyboard. */
 Arcade.register({
   id: "codecrack",
@@ -14,7 +15,7 @@ Arcade.register({
     "A secret code of distinct digits is hidden (no repeats).",
     "Tap the keypad (or type) to enter a guess, then Crack.",
     "🟨 yellow = right digit, right place · 🟩 green = right digit, wrong place · ⬜ grey = not in the code.",
-    "Crack the code within 10 guesses!",
+    "Past guesses move to the history panel on the left. Crack it within 10 guesses!",
   ],
   options: [
     { key: "len", label: "Code length", type: "select", default: 4,
@@ -30,14 +31,25 @@ Arcade.register({
     const secret = digits.slice(0, LEN).join("");
     let tries = 0, over = false, cur = "";
 
-    const wrap = api.el("div", "");
-    wrap.style.cssText = "display:flex;flex-direction:column;gap:14px;align-items:center;padding:8px;width:100%;max-width:360px";
+    const wide = window.innerWidth >= 560;
+    const HTILE = 32;
 
-    // past guesses (coloured tiles)
+    // ----- history panel (left) -----
+    const histPanel = api.el("div", "");
+    histPanel.style.cssText = "border:2px solid var(--mint-200);border-radius:14px;background:#fff;box-shadow:var(--shadow);" +
+      "padding:10px 12px;overflow-y:auto;" +
+      (wide ? "width:" + (LEN * HTILE + (LEN - 1) * 6 + 26) + "px;max-height:360px;align-self:stretch;"
+            : "width:100%;max-width:340px;max-height:168px;");
+    const histTitle = api.el("div", "", "📜 Guesses");
+    histTitle.style.cssText = "font-weight:800;color:var(--ink);font-size:14px;margin-bottom:8px;text-align:center";
     const log = api.el("div", "");
-    log.style.cssText = "display:flex;flex-direction:column;gap:6px;align-items:center;width:100%;max-height:230px;overflow-y:auto";
+    log.style.cssText = "display:flex;flex-direction:column;gap:6px;align-items:center";
+    const logEmpty = api.el("div", "", "—");
+    logEmpty.style.cssText = "color:var(--ink-soft);font-size:13px";
+    log.appendChild(logEmpty);
+    histPanel.appendChild(histTitle); histPanel.appendChild(log);
 
-    // current entry slots
+    // ----- current entry + keypad (right) -----
     const slots = api.el("div", "");
     slots.style.cssText = "display:flex;gap:8px;justify-content:center";
     const slotEls = [];
@@ -48,7 +60,6 @@ Arcade.register({
       slotEls.push(s); slots.appendChild(s);
     }
 
-    // on-screen keypad (touch) — also works with the physical keyboard
     const pad = api.el("div", "");
     pad.style.cssText = "display:grid;grid-template-columns:repeat(3,64px);gap:8px;justify-content:center";
     function keyBtn(label, onTap, cls) {
@@ -62,10 +73,16 @@ Arcade.register({
     pad.appendChild(keyBtn("0", () => addDigit("0")));
     pad.appendChild(keyBtn("✓", submit, "primary"));
 
-    log.appendChild(api.el("div", "", "")); // spacer keeps layout stable
-    wrap.appendChild(log);
-    wrap.appendChild(slots);
-    wrap.appendChild(pad);
+    const rightCol = api.el("div", "");
+    rightCol.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:14px";
+    rightCol.appendChild(slots); rightCol.appendChild(pad);
+
+    const wrap = api.el("div", "");
+    wrap.style.cssText = wide
+      ? "display:flex;gap:18px;align-items:flex-start;justify-content:center;width:100%"
+      : "display:flex;flex-direction:column;gap:14px;align-items:center;width:100%;max-width:360px";
+    wrap.appendChild(histPanel);   // history on the left (or on top when stacked)
+    wrap.appendChild(rightCol);
     api.board.appendChild(wrap);
 
     function renderCur() {
@@ -88,6 +105,7 @@ Arcade.register({
       if (over) return;
       if (cur.length !== LEN) { api.toast("Enter " + LEN + " distinct digits"); return; }
       tries++;
+      if (logEmpty.parentNode) logEmpty.remove();
       const g = cur;
       const rowEl = api.el("div", "");
       rowEl.style.cssText = "display:flex;gap:6px;justify-content:center";
@@ -96,12 +114,12 @@ Arcade.register({
         const state = g[i] === secret[i] ? "correct" : (secret.indexOf(g[i]) !== -1 ? "present" : "absent");
         if (state === "correct") bulls++;
         const tile = api.el("div", "", g[i]);
-        tile.style.cssText = "width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:20px;font-weight:800;" +
-          "background:" + COL[state] + ";color:" + FG[state];
+        tile.style.cssText = "width:" + HTILE + "px;height:" + HTILE + "px;border-radius:8px;display:grid;place-items:center;" +
+          "font-size:17px;font-weight:800;background:" + COL[state] + ";color:" + FG[state];
         rowEl.appendChild(tile);
       }
       log.appendChild(rowEl);
-      log.scrollTop = log.scrollHeight;
+      histPanel.scrollTop = histPanel.scrollHeight;  // keep newest in view
       cur = ""; renderCur(); score();
       if (bulls === LEN) {
         over = true;
