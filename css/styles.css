@@ -230,6 +230,15 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes turnpulse{0%,100%{box-shadow:0 0 0 0 rgba(67,184,132,.5)}50%{box-shadow:0 0 0 7px rgba(67,184,132,0)}}
 
+/* ===== Language selector ===== */
+.lang-select{
+  border:1.5px solid var(--mint-300);background:#fff;color:var(--ink);
+  border-radius:999px;padding:7px 10px;font-family:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;max-width:160px;
+}
+.lang-select:focus{outline:2px solid var(--mint-400);outline-offset:1px}
+.login-lang{margin-top:16px;width:100%;text-align:center}
+
 /* ===== Touch / on-screen game controls ===== */
 .touch-bar{
   display:flex;gap:10px;justify-content:center;align-items:center;
@@ -249,4 +258,13 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
   .setup-grid{grid-template-columns:1fr}
   .hub-head h2{font-size:23px}
   .screen{padding:18px 14px 60px}
+}
+@media (max-width:520px){
+  .topbar{padding:10px 12px}
+  .topbar-right{gap:7px}
+  .brand-name{font-size:17px}
+  .lang-select{max-width:118px;padding:6px 8px;font-size:12px}
+  .user-name{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #logout-btn{padding:8px 12px}
+  .touch-btn{min-width:54px;height:54px;font-size:22px}
 }

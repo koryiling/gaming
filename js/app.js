@@ -14,6 +14,21 @@
     return n;
   };
 
+  /* ---------- i18n helpers (fall back to English game defs / keys) ---------- */
+  const T = (key, vars) => (window.I18n ? I18n.t(key, vars) : key);
+  const TAG = (label) => (window.I18n ? I18n.tag(label) : label);
+  function gameText(def) {
+    const tr = window.I18n && I18n.game(def.id);
+    return {
+      name: (tr && tr.name) || def.name,
+      tagline: (tr && tr.tagline) || def.tagline,
+      rules: (tr && tr.rules) || def.rules || [],
+    };
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
   const state = {
     username: "",
     current: null,        // active game def
@@ -115,7 +130,14 @@
     store.set(name);
     $("#user-name").textContent = name;
     $("#user-avatar").textContent = name.charAt(0).toUpperCase();
-    $("#hub-greet-name").textContent = name;
+    updateGreeting();
+  }
+
+  function updateGreeting() {
+    const h = $("#hub-greet-h");
+    if (!h) return;
+    const name = state.username || "friend";
+    h.innerHTML = T("hubGreet").replace("{name}", '<span id="hub-greet-name">' + escapeHtml(name) + "</span>");
   }
 
   function initLogin() {
@@ -126,14 +148,14 @@
       e.preventDefault();
       const name = input.value.trim();
       if (name.length < 2) {
-        hint.textContent = "Please enter at least 2 characters.";
+        hint.textContent = T("nameMin");
         return;
       }
       hint.textContent = "";
       setUser(name);
       renderHub();
       show("hub-screen");
-      toast("Welcome, " + name + "! 🌿");
+      toast(T("welcome", { name: name }));
     });
 
     $("#logout-btn").addEventListener("click", () => {
@@ -145,11 +167,11 @@
     });
 
     $("#user-chip").addEventListener("click", () => {
-      const n = prompt("Change your username:", state.username);
+      const n = prompt(T("changeName"), state.username);
       if (n && n.trim().length >= 2) {
         setUser(n.trim());
         renderHub();
-        toast("Name updated ✔");
+        toast(T("nameUpdated"));
       }
     });
 
@@ -161,9 +183,9 @@
 
   /* ---------- hub ---------- */
   function playerBadge(def) {
-    if (def.maxPlayers <= 1) return "1 player";
-    if (def.minPlayers === def.maxPlayers) return def.maxPlayers + " players";
-    return def.minPlayers + "–" + def.maxPlayers + " players";
+    if (def.maxPlayers <= 1) return T("onePlayer");
+    if (def.minPlayers === def.maxPlayers) return T("nPlayers", { n: def.maxPlayers });
+    return T("nmPlayers", { min: def.minPlayers, max: def.maxPlayers });
   }
 
   function renderFilters() {
@@ -172,7 +194,7 @@
     const wrap = $("#filter-pills");
     wrap.innerHTML = "";
     cats.forEach((c) => {
-      const p = el("button", "pill" + (c === state.activeFilter ? " active" : ""), c);
+      const p = el("button", "pill" + (c === state.activeFilter ? " active" : ""), TAG(c));
       p.addEventListener("click", () => {
         state.activeFilter = c;
         renderFilters();
@@ -188,22 +210,25 @@
     grid.innerHTML = "";
     const list = GAMES.filter((g) => {
       const matchCat = state.activeFilter === "All" || (g.tags || []).includes(state.activeFilter);
-      const matchText = !q || (g.name + " " + g.tagline).toLowerCase().includes(q);
+      const gt = gameText(g);
+      const hay = (g.name + " " + g.tagline + " " + gt.name + " " + gt.tagline).toLowerCase();
+      const matchText = !q || hay.includes(q);
       return matchCat && matchText;
     });
     if (!list.length) {
-      grid.appendChild(el("p", "", "No games match that search 🌱"));
+      grid.appendChild(el("p", "", T("noMatch")));
       return;
     }
     list.forEach((g, i) => {
+      const gt = gameText(g);
       const card = el("div", "game-card");
       card.style.animationDelay = i * 0.03 + "s";
       card.innerHTML =
         '<div class="game-emoji">' + g.emoji + "</div>" +
-        "<h3>" + g.name + "</h3>" +
-        "<p>" + g.tagline + "</p>" +
+        "<h3>" + escapeHtml(gt.name) + "</h3>" +
+        "<p>" + escapeHtml(gt.tagline) + "</p>" +
         '<div class="game-tags"><span class="tag">' + playerBadge(g) + "</span>" +
-        (g.tags || []).map((t) => '<span class="tag">' + t + "</span>").join("") +
+        (g.tags || []).map((t) => '<span class="tag">' + TAG(t) + "</span>").join("") +
         "</div>";
       card.addEventListener("click", () => openGame(g));
       grid.appendChild(card);
@@ -218,13 +243,14 @@
   /* ---------- setup screen ---------- */
   function openGame(def) {
     state.current = def;
-    $("#game-title").textContent = def.emoji + " " + def.name;
-    $("#setup-tagline").textContent = def.tagline;
+    const gt = gameText(def);
+    $("#game-title").textContent = def.emoji + " " + gt.name;
+    $("#setup-tagline").textContent = gt.tagline;
 
     // rules
     const ul = $("#rules-list");
     ul.innerHTML = "";
-    (def.rules || []).forEach((r) => ul.appendChild(el("li", "", r)));
+    gt.rules.forEach((r) => ul.appendChild(el("li", "", r)));
 
     buildOptions(def);
     buildPlayers(def);
@@ -241,7 +267,7 @@
     form.innerHTML = "";
     optionValues = {};
     if (!def.options || !def.options.length) {
-      form.appendChild(el("p", "game-tagline", "No options — just hit start! 🎮"));
+      form.appendChild(el("p", "game-tagline", T("noOptions")));
       return;
     }
     def.options.forEach((opt) => {
@@ -456,7 +482,7 @@
         d.style.background = active.color;
         banner.appendChild(d);
       }
-      banner.appendChild(el("span", "tb-text", active.name + "’s turn"));
+      banner.appendChild(el("span", "tb-text", T("turnOf", { name: active.name })));
       banner.hidden = false;
     } else {
       banner.hidden = true;
@@ -519,7 +545,7 @@
       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1);
       row.appendChild(el("span", "lb-rank", medal));
       row.appendChild(el("span", "lb-name", e.name));
-      const val = metric === "wins" ? e.score + (e.score === 1 ? " win" : " wins") : String(e.score);
+      const val = metric === "wins" ? e.score + " " + (e.score === 1 ? T("win") : T("wins")) : String(e.score);
       row.appendChild(el("span", "lb-score", val));
       ol.appendChild(row);
     });
@@ -527,15 +553,15 @@
   function fillLBList(ol, gameId, emptyMsg) {
     const metric = gameMetric(gameId);
     if (lbScope === "global") {
-      if (!globalURL()) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", "🌍 Global board isn't set up yet.")); return; }
-      ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", "Loading global scores… ⏳"));
+      if (!globalURL()) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalNotSetup"))); return; }
+      ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("loadingGlobal")));
       const reqId = ++globalReqId; ol._req = reqId;
       fetchGlobalTop(gameId, lbWindow, metric)
-        .then((list) => { if (ol._req === reqId) renderRows(ol, list, metric, "No global scores yet — be the first! 🌍"); })
-        .catch(() => { if (ol._req === reqId) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", "⚠ Couldn't reach the global board.")); } });
+        .then((list) => { if (ol._req === reqId) renderRows(ol, list, metric, T("noGlobal")); })
+        .catch(() => { if (ol._req === reqId) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalErr"))); } });
       return;
     }
-    renderRows(ol, board.top(gameId, lbWindow, metric), metric, emptyMsg || "No scores yet 🌱");
+    renderRows(ol, board.top(gameId, lbWindow, metric), metric, emptyMsg || T("noScores"));
   }
 
   // local vs global scope (shared by modal + in-game panel)
@@ -572,7 +598,7 @@
   }
 
   function renderLeaderboard() {
-    fillLBList($("#lb-list"), $("#lb-game").value, "No scores yet — go play and set a record! 🌱");
+    fillLBList($("#lb-list"), $("#lb-game").value, T("setRecord"));
   }
 
   // in-game side panel — shows the current game's top 10
@@ -583,21 +609,27 @@
   function renderGameLB() {
     const def = state.current;
     if (!def) return;
-    $("#game-lb-title").textContent = "🏆 Top 10 — " + def.name;
-    fillLBList($("#game-lb-list"), def.id, "No scores yet — be the first! 🌱");
+    $("#game-lb-title").textContent = T("top10", { name: gameText(def).name });
+    fillLBList($("#game-lb-list"), def.id, T("beFirst"));
     applyLBSide();
   }
 
-  function openLeaderboard() {
+  function repopulateLBGames() {
     const sel = $("#lb-game");
+    const cur = sel.value;
     sel.innerHTML = "";
     GAMES.forEach((g) => {
       const o = document.createElement("option");
       o.value = g.id;
-      o.textContent = g.emoji + " " + g.name;
+      o.textContent = g.emoji + " " + gameText(g).name;
       sel.appendChild(o);
     });
-    if (state.current) sel.value = state.current.id;
+    if (cur && GAMES.some((g) => g.id === cur)) sel.value = cur;
+    else if (state.current) sel.value = state.current.id;
+  }
+
+  function openLeaderboard() {
+    repopulateLBGames();
     renderLeaderboard();
     $("#lb-overlay").hidden = false;
   }
@@ -610,7 +642,7 @@
       const gameId = $("#lb-game").value;
       board.clear(gameId);
       renderLeaderboard();
-      toast("Scores cleared for this game 🗑");
+      toast(T("scoresCleared"));
     });
     $("#lb-overlay").addEventListener("click", (e) => {
       if (e.target === $("#lb-overlay")) $("#lb-overlay").hidden = true;
@@ -630,10 +662,48 @@
     applyLBSide();
   }
 
+  /* ---------- language ---------- */
+  function refreshAll() {
+    [$("#lang-select"), $("#lang-select-login")].forEach((s) => { if (s) s.value = I18n.lang; });
+    updateGreeting();
+    renderFilters();
+    renderCards();
+    // setup screen texts (only when a game's setup panel is showing)
+    if (state.current && !$("#game-screen").hidden && !$("#setup-panel").hidden) {
+      const gt = gameText(state.current);
+      $("#game-title").textContent = state.current.emoji + " " + gt.name;
+      $("#setup-tagline").textContent = gt.tagline;
+      const ul = $("#rules-list"); ul.innerHTML = "";
+      gt.rules.forEach((r) => ul.appendChild(el("li", "", r)));
+    }
+    if (state.current) renderGameLB();
+    if (!$("#lb-overlay").hidden) { repopulateLBGames(); renderLeaderboard(); }
+  }
+
+  function initLang() {
+    if (!window.I18n) return;
+    const fill = (sel) => {
+      if (!sel) return;
+      sel.innerHTML = "";
+      I18n.supported.forEach((code) => {
+        const o = document.createElement("option");
+        o.value = code; o.textContent = I18n.labels[code] || code;
+        sel.appendChild(o);
+      });
+      sel.value = I18n.lang;
+      sel.addEventListener("change", () => I18n.set(sel.value));
+    };
+    fill($("#lang-select"));
+    fill($("#lang-select-login"));
+    I18n.onChange(refreshAll);
+    I18n.applyStatic();
+  }
+
   /* ---------- public API ---------- */
   window.Arcade = {
     register: (def) => GAMES.push(def),
     boot: function () {
+      initLang();
       initLogin();
       initGameScreen();
       initAutoFit();

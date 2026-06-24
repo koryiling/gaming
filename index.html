@@ -16,11 +16,12 @@
       <span class="brand-name">Mint Arcade</span>
     </div>
     <div class="topbar-right">
+      <select class="lang-select" id="lang-select" title="Language / Bahasa / 语言" aria-label="Language"></select>
       <span class="user-chip" id="user-chip" title="Click to change name">
         <span class="user-avatar" id="user-avatar">M</span>
         <span class="user-name" id="user-name">Player</span>
       </span>
-      <button class="btn ghost small" id="logout-btn">Switch user</button>
+      <button class="btn ghost small" id="logout-btn" data-i18n="switchUser">Switch user</button>
     </div>
   </header>
 
@@ -29,15 +30,16 @@
     <div class="login-card">
       <div class="login-logo">🌿</div>
       <h1>Mint Arcade</h1>
-      <p class="subtitle">10+ mini games. Bring your friends. Pick a name to begin.</p>
+      <p class="subtitle" data-i18n="loginSubtitle">10+ mini games. Bring your friends. Pick a name to begin.</p>
       <form id="login-form" autocomplete="off">
-        <label for="username-input">Your username</label>
-        <input id="username-input" type="text" maxlength="16" placeholder="e.g. MintNinja" required />
+        <label for="username-input" data-i18n="usernameLabel">Your username</label>
+        <input id="username-input" type="text" maxlength="16" placeholder="e.g. MintNinja" data-i18n-ph="usernamePh" required />
         <p class="hint" id="login-hint"></p>
-        <button type="submit" class="btn primary block">Enter the arcade →</button>
+        <button type="submit" class="btn primary block" data-i18n="enterArcade">Enter the arcade →</button>
       </form>
+      <select class="lang-select login-lang" id="lang-select-login" aria-label="Language"></select>
     </div>
-    <p class="login-foot">Made for fun • plays on one screen • 1–4 players</p>
+    <p class="login-foot" data-i18n="loginFoot">Made for fun • plays on one screen • 1–4 players</p>
   </section>
 
   <!-- ===== Hub screen ===== -->
@@ -59,12 +61,12 @@
             <path d="M70 49 q9 6 17 0" stroke="#173a2b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
             <circle cx="91" cy="41" r="1.6" fill="#173a2b"/>
           </svg>
-          <h2>Choose a game, <span id="hub-greet-name">friend</span> 👋</h2>
+          <h2 id="hub-greet-h">Choose a game, <span id="hub-greet-name">friend</span> 👋</h2>
         </div>
-        <button class="btn primary" id="leaderboard-btn">🏆 Leaderboard</button>
+        <button class="btn primary" id="leaderboard-btn" data-i18n="leaderboard">🏆 Leaderboard</button>
       </div>
       <div class="hub-controls">
-        <input type="search" id="game-search" placeholder="🔍 Search games…" />
+        <input type="search" id="game-search" placeholder="🔍 Search games…" data-i18n-ph="searchPh" />
         <div class="filter-pills" id="filter-pills"></div>
       </div>
     </div>
@@ -74,7 +76,7 @@
   <!-- ===== Game screen ===== -->
   <section class="screen game-screen" id="game-screen" hidden>
     <div class="game-top">
-      <button class="btn ghost" id="back-btn">← All games</button>
+      <button class="btn ghost" id="back-btn" data-i18n="allGames">← All games</button>
       <h2 id="game-title">Game</h2>
     </div>
 
@@ -82,19 +84,19 @@
     <div class="setup" id="setup-panel">
       <div class="setup-grid">
         <div class="panel rules-panel">
-          <h3>📖 How to play</h3>
+          <h3 data-i18n="howToPlay">📖 How to play</h3>
           <p class="game-tagline" id="setup-tagline"></p>
           <ul id="rules-list"></ul>
         </div>
         <div class="panel">
-          <h3>⚙️ Options</h3>
+          <h3 data-i18n="optionsH">⚙️ Options</h3>
           <div id="options-form" class="options-form"></div>
           <div id="players-block">
-            <h3 class="players-h">👥 Players</h3>
+            <h3 class="players-h" data-i18n="playersH">👥 Players</h3>
             <div class="player-count" id="player-count-row"></div>
             <div class="player-names" id="player-names"></div>
           </div>
-          <button class="btn primary block" id="start-btn">▶ Start game</button>
+          <button class="btn primary block" id="start-btn" data-i18n="startGame">▶ Start game</button>
         </div>
       </div>
     </div>
@@ -104,8 +106,8 @@
       <div class="play-bar">
         <div class="scoreboard" id="scoreboard"></div>
         <div class="play-actions">
-          <button class="btn ghost small" id="restart-btn">↻ Restart</button>
-          <button class="btn ghost small" id="setup-btn">⚙ Setup</button>
+          <button class="btn ghost small" id="restart-btn" data-i18n="restart">↻ Restart</button>
+          <button class="btn ghost small" id="setup-btn" data-i18n="setupBtn">⚙ Setup</button>
         </div>
       </div>
       <div class="turn-banner" id="turn-banner" hidden></div>
@@ -123,10 +125,10 @@
             <button type="button" data-scope="global">🌍</button>
           </div>
           <div class="lb-window seg" id="game-lb-window">
-            <button type="button" data-w="day">Day</button>
-            <button type="button" data-w="week">Week</button>
-            <button type="button" data-w="month">Month</button>
-            <button type="button" data-w="all">All</button>
+            <button type="button" data-w="day" data-i18n="sDay">Day</button>
+            <button type="button" data-w="week" data-i18n="sWeek">Week</button>
+            <button type="button" data-w="month" data-i18n="sMonth">Month</button>
+            <button type="button" data-w="all" data-i18n="sAll">All</button>
           </div>
           <ol class="lb-list" id="game-lb-list"></ol>
         </aside>
@@ -139,23 +141,23 @@
   <div class="lb-overlay" id="lb-overlay" hidden>
     <div class="lb-modal">
       <div class="lb-head">
-        <h2>🏆 Leaderboard</h2>
-        <button class="btn ghost small" id="lb-close">✕ Close</button>
+        <h2 data-i18n="leaderboardTitle">🏆 Leaderboard</h2>
+        <button class="btn ghost small" id="lb-close" data-i18n="close">✕ Close</button>
       </div>
       <div class="lb-controls">
-        <label for="lb-game">Game</label>
+        <label for="lb-game" data-i18n="gameLabel">Game</label>
         <select id="lb-game"></select>
-        <button class="btn ghost small" id="lb-clear">🗑 Clear this game</button>
+        <button class="btn ghost small" id="lb-clear" data-i18n="clearGame">🗑 Clear this game</button>
       </div>
       <div class="lb-scope seg" id="lb-scope">
-        <button type="button" data-scope="local">📱 This device</button>
-        <button type="button" data-scope="global">🌍 Global</button>
+        <button type="button" data-scope="local" data-i18n="scopeDevice">📱 This device</button>
+        <button type="button" data-scope="global" data-i18n="scopeGlobal">🌍 Global</button>
       </div>
       <div class="lb-window seg" id="lb-window">
-        <button type="button" data-w="day">Today</button>
-        <button type="button" data-w="week">Week</button>
-        <button type="button" data-w="month">Month</button>
-        <button type="button" data-w="all">All time</button>
+        <button type="button" data-w="day" data-i18n="winToday">Today</button>
+        <button type="button" data-w="week" data-i18n="winWeek">Week</button>
+        <button type="button" data-w="month" data-i18n="winMonth">Month</button>
+        <button type="button" data-w="all" data-i18n="winAll">All time</button>
       </div>
       <ol class="lb-list" id="lb-list"></ol>
     </div>
@@ -166,6 +168,8 @@
 
   <!-- Core + games -->
   <script src="js/config.js"></script>
+  <script src="js/i18n-games.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/app.js"></script>
   <script src="js/touch.js"></script>
   <script src="js/games/snake.js"></script>
