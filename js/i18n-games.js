@@ -190,17 +190,17 @@ window.__GAME_I18N = {
       rules: [
         "Kod rahsia berbentuk pancang berwarna disembunyikan. Mengaganya!",
         "Ketuk warna untuk mengisi tekaan anda, kemudian Hantar.",
-        "⚫ petunjuk hitam = warna betul di tempat betul · ⚪ petunjuk putih = warna betul, tempat salah.",
+        "Setiap pancang bergelang: 🟨 kuning = warna betul & tempat betul, 🟩 hijau = warna betul, tempat salah.",
         "Pecahkan kod sebelum kehabisan tekaan.",
       ],
     },
     wordmaster: {
       name: "Word Master",
-      tagline: "Teka perkataan tersembunyi dalam sepuluh cubaan. Hijau = tempat betul, kuning = tempat salah.",
+      tagline: "Teka perkataan tersembunyi dalam sepuluh cubaan. Kuning = tempat betul, hijau = tempat salah.",
       rules: [
         "Teka perkataan rahsia. Taip perkataan dan tekan Enter.",
-        "🟩 Hijau = huruf betul di tempat yang betul.",
-        "🟨 Kuning = huruf ada dalam perkataan, tetapi di tempat yang berbeza.",
+        "🟨 Kuning = huruf betul di tempat yang betul.",
+        "🟩 Hijau = huruf ada dalam perkataan, tetapi di tempat yang berbeza.",
         "⬜ Kelabu = huruf tiada dalam perkataan. Pecahkan dalam 10 tekaan!",
         "Tekaan lepas dan keputusannya disenaraikan dalam panel Sejarah di sebelah kanan.",
       ],
@@ -277,11 +277,11 @@ window.__GAME_I18N = {
     },
     codecrack: {
       name: "Code Crack",
-      tagline: "Cungkil kod rahsia berbilang digit unik daripada petunjuk lembu jantan 🎯 dan lembu betina 🐄.",
+      tagline: "Cungkil kod rahsia berbilang digit unik daripada petunjuk warna.",
       rules: [
         "Kod rahsia berbentuk digit unik disembunyikan (tiada ulangan).",
-        "Masukkan tekaan digit unik dan tekan Enter.",
-        "🎯 Bull = digit betul, tempat betul · 🐄 Cow = digit betul, tempat salah.",
+        "Ketuk pad kekunci (atau taip) untuk memasukkan tekaan, kemudian Cungkil.",
+        "🟨 kuning = digit betul, tempat betul · 🟩 hijau = digit betul, tempat salah · ⬜ kelabu = tiada dalam kod.",
         "Pecahkan kod dalam 10 tekaan!",
       ],
     },
@@ -553,17 +553,17 @@ window.__GAME_I18N = {
       rules: [
         "一组彩色棋钉组成的秘密密码被隐藏起来。把它推理出来！",
         "点击颜色填入你的猜测，然后提交。",
-        "⚫ 黑色线索 = 颜色对、位置也对 · ⚪ 白色线索 = 颜色对、位置不对。",
+        "每个棋钉带有色环：🟨 黄色 = 颜色对且位置对，🟩 绿色 = 颜色对、位置错。",
         "在用尽猜测次数之前破解密码。",
       ],
     },
     wordmaster: {
       name: "猜词大师",
-      tagline: "在十次内猜出隐藏的单词。绿色 = 位置正确，黄色 = 位置错误。",
+      tagline: "在十次内猜出隐藏的单词。黄色 = 位置正确，绿色 = 位置错误。",
       rules: [
         "猜出秘密单词。输入一个单词并按回车。",
-        "🟩 绿色 = 字母正确且位置正确。",
-        "🟨 黄色 = 字母在单词中，但位置不同。",
+        "🟨 黄色 = 字母正确且位置正确。",
+        "🟩 绿色 = 字母在单词中，但位置不同。",
         "⬜ 灰色 = 字母不在单词中。在 10 次内破解它！",
         "过往的猜测及其结果列在右侧的历史面板中。",
       ],
@@ -640,11 +640,11 @@ window.__GAME_I18N = {
     },
     codecrack: {
       name: "密码破译",
-      tagline: "根据公牛 🎯 和母牛 🐄 线索，推断由不重复数字组成的秘密密码。",
+      tagline: "根据颜色线索，推断由不重复数字组成的秘密密码。",
       rules: [
         "一组由不重复数字组成的秘密密码被隐藏（无重复）。",
-        "输入一组不重复数字的猜测并按回车。",
-        "🎯 公牛 = 数字对、位置对 · 🐄 母牛 = 数字对、位置不对。",
+        "点击键盘（或打字）输入猜测，然后破译。",
+        "🟨 黄色 = 数字对、位置对 · 🟩 绿色 = 数字对、位置不对 · ⬜ 灰色 = 不在密码中。",
         "在 10 次猜测内破解密码！",
       ],
     },

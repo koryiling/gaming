@@ -9,8 +9,8 @@ Arcade.register({
   maxPlayers: 1,
   rules: [
     "Guess the secret word. Type a word and press Enter.",
-    "🟩 Green = correct letter in the correct spot.",
-    "🟨 Yellow = letter is in the word, but a different spot.",
+    "🟨 Yellow = correct letter in the correct spot.",
+    "🟩 Green = letter is in the word, but a different spot.",
     "⬜ Grey = letter is not in the word. Crack it within 10 guesses!",
     "Past guesses and their results are listed in the History panel on the right.",
   ],
@@ -27,7 +27,9 @@ Arcade.register({
     };
     const LEN = api.config.options.len;
     const ROWS = 10;
-    const COL = { correct: "#43b884", present: "#f1c40f", absent: "#9aa6a0" };
+    // 🟨 yellow = right letter & right spot · 🟩 green = right letter, wrong spot · grey = absent
+    const COL = { correct: "#f1c40f", present: "#43b884", absent: "#9aa6a0" };
+    const FG = { correct: "#173a2b", present: "#fff", absent: "#fff" };
     const pool = WORDS[LEN].filter((w) => w.length === LEN);
     const answer = pool[(Math.random() * pool.length) | 0].toUpperCase();
     let row = 0, col = 0, over = false;
@@ -143,10 +145,10 @@ Arcade.register({
         if (j >= 0) { res[i] = "present"; used[j] = true; }
       }
       grid[row].forEach((cell, i) => {
-        cell.style.background = COL[res[i]]; cell.style.borderColor = COL[res[i]]; cell.style.color = "#fff";
+        cell.style.background = COL[res[i]]; cell.style.borderColor = COL[res[i]]; cell.style.color = FG[res[i]];
         const k = keyEls[g[i]];
         if (k) { const cur = k.dataset.state; const rank = { absent: 0, present: 1, correct: 2 };
-          if (!cur || rank[res[i]] > rank[cur]) { k.dataset.state = res[i]; k.style.background = COL[res[i]]; k.style.color = "#fff"; } }
+          if (!cur || rank[res[i]] > rank[cur]) { k.dataset.state = res[i]; k.style.background = COL[res[i]]; k.style.color = FG[res[i]]; } }
       });
       addHistory(g, res, row + 1);
       if (g === answer) { over = true; api.setStatus("🎉 Got it — <b>" + answer + "</b>! Solved in " + (row + 1) + ". Restart for a new word."); board(); return; }

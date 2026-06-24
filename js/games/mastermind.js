@@ -10,7 +10,7 @@ Arcade.register({
   rules: [
     "A secret code of coloured pegs is hidden. Deduce it!",
     "Tap colours to fill your guess, then Submit.",
-    "⚫ black clue = right colour in the right spot · ⚪ white clue = right colour, wrong spot.",
+    "Each guessed peg is ringed: 🟨 yellow = right colour & spot, 🟩 green = right colour, wrong spot.",
     "Crack the code before you run out of guesses.",
   ],
   options: [
@@ -23,6 +23,8 @@ Arcade.register({
 
   create(api) {
     const PALETTE = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#1abc9c", "#34495e"];
+    // per-position feedback ring: 🟨 right colour & spot · 🟩 right colour wrong spot · grey absent
+    const COL = { correct: "#f1c40f", present: "#43b884", absent: "#9aa6a0" };
     const N = api.config.options.pegs;
     const K = api.config.options.colors;
     const dupes = api.config.options.dupes;
@@ -82,23 +84,23 @@ Arcade.register({
         palette.appendChild(b);
       }
     }
-    function feedback(g) {
-      let black = 0, white = 0;
-      const cg = g.slice(), cc = code.slice();
-      for (let i = 0; i < N; i++) if (cg[i] === cc[i]) { black++; cg[i] = -1; cc[i] = -2; }
-      for (let i = 0; i < N; i++) if (cg[i] >= 0) { const j = cc.indexOf(cg[i]); if (j >= 0) { white++; cc[j] = -2; } }
-      return { black, white };
+    function feedbackStates(g) {
+      const states = Array(N).fill("absent");
+      const cc = code.slice();
+      for (let i = 0; i < N; i++) if (g[i] === cc[i]) { states[i] = "correct"; cc[i] = -2; }
+      for (let i = 0; i < N; i++) if (states[i] !== "correct") { const j = cc.indexOf(g[i]); if (j >= 0) { states[i] = "present"; cc[j] = -2; } }
+      return states;
     }
-    function addHistory(g, fb) {
+    function addHistory(g, states) {
       const row = api.el("div", "");
-      row.style.cssText = "display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:6px 10px;box-shadow:var(--shadow)";
-      const pegs = api.el("div", ""); pegs.style.cssText = "display:flex;gap:6px";
-      g.forEach((c) => pegs.appendChild(peg(c, 26)));
-      const clues = api.el("div", ""); clues.style.cssText = "display:grid;grid-template-columns:repeat(" + Math.ceil(N / 2) + ",1fr);gap:3px";
-      for (let i = 0; i < fb.black; i++) { const d = api.el("div", ""); d.style.cssText = "width:13px;height:13px;border-radius:50%;background:#173a2b"; clues.appendChild(d); }
-      for (let i = 0; i < fb.white; i++) { const d = api.el("div", ""); d.style.cssText = "width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid #173a2b"; clues.appendChild(d); }
-      row.appendChild(pegs);
-      row.appendChild(api.el("div", "", "<b style='color:var(--mint-700)'>" + fb.black + "⚫ " + fb.white + "⚪</b>"));
+      row.style.cssText = "display:flex;align-items:center;gap:10px;justify-content:center;background:#fff;border-radius:10px;padding:8px 10px;box-shadow:var(--shadow)";
+      g.forEach((c, i) => {
+        // each guessed peg sits inside a coloured ring showing its per-position feedback
+        const ring = api.el("div", "");
+        ring.style.cssText = "padding:4px;border-radius:50%;background:" + COL[states[i]];
+        ring.appendChild(peg(c, 26));
+        row.appendChild(ring);
+      });
       history.appendChild(row);
     }
     function board() {
@@ -106,10 +108,10 @@ Arcade.register({
     }
     function check() {
       if (over || guess.some((g) => g == null)) return;
-      const fb = feedback(guess);
-      addHistory(guess, fb);
+      const states = feedbackStates(guess);
+      addHistory(guess, states);
       rows++;
-      if (fb.black === N) { over = true; reveal("🎉 Cracked it in " + rows + "! Brilliant detective work."); return; }
+      if (states.every((s) => s === "correct")) { over = true; reveal("🎉 Cracked it in " + rows + "! Brilliant detective work."); return; }
       if (rows >= MAX) { over = true; reveal("💥 Out of guesses! The code was:"); return; }
       guess = Array(N).fill(null);
       renderGuess(); board();
