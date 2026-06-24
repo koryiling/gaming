@@ -5,7 +5,7 @@ Arcade.register({
   emoji: "🔴",
   tagline: "Drop discs and connect four in a row before your rival.",
   tags: ["Board", "Strategy"],
-  minPlayers: 2,
+  minPlayers: 1,
   maxPlayers: 2,
   leaderboard: { type: "wins", reset: "year" }, // only the winner is tallied; resets each year
   rules: [
@@ -13,6 +13,7 @@ Arcade.register({
     "Discs fall to the lowest empty slot in that column.",
     "First to line up four discs — horizontally, vertically, or diagonally — wins.",
     "Fill the board with no four-in-a-row for a draw.",
+    "Pick 1 player to face a 🤖 computer, or 2 players hot-seat.",
   ],
   options: [
     {
@@ -23,7 +24,8 @@ Arcade.register({
 
   create(api) {
     const [COLS, ROWS] = api.config.options.grid.split("x").map(Number);
-    const names = api.config.players;
+    const vsAI = api.config.players.length === 1;
+    const names = vsAI ? [api.config.players[0], "🤖 Computer"] : api.config.players;
     const colors = [api.colors[4], api.colors[1]]; // red, orange
     const disc = ["🔴", "🟠"];
     let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -60,6 +62,11 @@ Arcade.register({
     }
     function drop(c) {
       if (over) return;
+      if (vsAI && turn === 1) return; // computer's turn — ignore clicks
+      place(c);
+    }
+    function place(c) {
+      if (over) return;
       let r = -1;
       for (let i = ROWS - 1; i >= 0; i--) if (board[i][c] == null) { r = i; break; }
       if (r < 0) return;
@@ -69,7 +76,34 @@ Arcade.register({
       if (line) return finish(turn, line);
       if (board.every((row) => row.every((v) => v != null))) return finish(null);
       turn = 1 - turn; scores();
-      api.setStatus(disc[turn] + " " + names[turn] + ", your move — pick a column.");
+      if (vsAI && turn === 1) {
+        api.setStatus("🤖 Computer is thinking…");
+        setTimeout(aiMove, 550);
+      } else {
+        api.setStatus(disc[turn] + " " + names[turn] + ", your move — pick a column.");
+      }
+    }
+
+    // simple AI: win if possible, else block the opponent, else favour the centre
+    function dropRow(c) { for (let i = ROWS - 1; i >= 0; i--) if (board[i][c] == null) return i; return -1; }
+    function wouldWin(c, p) {
+      const r = dropRow(c); if (r < 0) return false;
+      board[r][c] = p; const w = !!winAt(r, c); board[r][c] = null; return w;
+    }
+    function aiMove() {
+      if (over) return;
+      const valid = [];
+      for (let c = 0; c < COLS; c++) if (dropRow(c) >= 0) valid.push(c);
+      if (!valid.length) return;
+      let choice = valid.find((c) => wouldWin(c, 1));           // take the win
+      if (choice == null) choice = valid.find((c) => wouldWin(c, 0)); // block their win
+      if (choice == null) {
+        const center = Math.floor(COLS / 2);
+        valid.sort((a, b) => Math.abs(a - center) - Math.abs(b - center));
+        const top = valid.slice(0, Math.min(3, valid.length));
+        choice = top[(Math.random() * top.length) | 0];
+      }
+      place(choice);
     }
     function winAt(r, c) {
       const me = board[r][c];
@@ -90,7 +124,7 @@ Arcade.register({
       over = true;
       if (who != null) {
         wins[who]++;
-        api.recordWin(names[who]); // only the winner goes to the leaderboard (win tally)
+        if (!vsAI || who === 0) api.recordWin(names[who]); // only the winner (never the computer)
         (line || []).forEach(([r, c]) => (cells[r][c].style.background = "var(--mint-300)"));
         api.setStatus("🏆 " + disc[who] + " " + names[who] + " connects four! Restart for a rematch.");
       } else {

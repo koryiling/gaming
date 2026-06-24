@@ -19,6 +19,7 @@ window.__GAME_I18N = {
         "Cakera jatuh ke petak kosong terbawah dalam lajur itu.",
         "Sesiapa yang dahulu menyusun empat cakera sebaris — mendatar, menegak, atau menyerong — menang.",
         "Penuhkan papan tanpa empat sebaris untuk seri.",
+        "Pilih 1 pemain untuk lawan 🤖 komputer, atau 2 pemain main bergilir.",
       ],
     },
     memory: {
@@ -382,6 +383,7 @@ window.__GAME_I18N = {
         "棋子会落到该列最下方的空格。",
         "率先将四枚棋子连成一线——横、竖或斜——者获胜。",
         "棋盘填满却无人连成四子则为平局。",
+        "选择 1 名玩家对战 🤖 电脑，或 2 名玩家轮流游玩。",
       ],
     },
     memory: {
