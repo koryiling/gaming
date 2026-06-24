@@ -13,6 +13,7 @@ Arcade.register({
     "Fill an entire row to clear it and score points.",
     "Clearing several rows at once scores much more.",
     "The blocks speed up as you level up. Don't reach the top!",
+    "⏸️ Pause (or press P) to stop the game and pick up right where you left off.",
   ],
   options: [
     { key: "level", label: "Start level", type: "select", default: 1,
@@ -43,9 +44,12 @@ Arcade.register({
     const pctx = preview.getContext("2d");
     const rotateBtn = api.el("button", "btn primary", "🔄 Rotate");
     rotateBtn.style.width = "100%";
+    const pauseBtn = api.el("button", "btn", "⏸️ Pause");
+    pauseBtn.style.width = "100%";
     side.appendChild(nextLabel);
     side.appendChild(preview);
     side.appendChild(rotateBtn);
+    side.appendChild(pauseBtn);
     wrap.appendChild(side);
     api.board.appendChild(wrap);
 
@@ -57,15 +61,16 @@ Arcade.register({
     };
     const SPAN = { I: 4, O: 4, T: 3, S: 3, Z: 3, J: 3, L: 3 };
 
-    let grid, piece, next, score, lines, level, over, dropT = null;
+    let grid, piece, next, score, lines, level, over, paused, dropT = null;
     const startLevel = api.config.options.level;
 
     function reset() {
       grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-      score = 0; lines = 0; level = startLevel; over = false;
+      score = 0; lines = 0; level = startLevel; over = false; paused = false;
+      pauseBtn.textContent = "⏸️ Pause";
       next = bag();
       spawn(); updateScore(); setSpeed();
-      api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop");
+      api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop · P pause");
     }
     function bag() { const k = "IOTSZJL"; return k[(Math.random() * 7) | 0]; }
     function spawn() {
@@ -136,7 +141,22 @@ Arcade.register({
     function setSpeed() {
       if (dropT) clearInterval(dropT);
       const ms = Math.max(90, 700 - (level - 1) * 70);
-      dropT = setInterval(() => { if (!over) { softDrop(); draw(); } }, ms);
+      dropT = setInterval(() => { if (!over && !paused) { softDrop(); draw(); } }, ms);
+    }
+    function togglePause() {
+      if (over) return;
+      paused = !paused;
+      if (paused) {
+        if (dropT) { clearInterval(dropT); dropT = null; }
+        pauseBtn.textContent = "▶️ Resume";
+        api.setStatus("⏸️ Paused — press Resume (or P) to continue.");
+      } else {
+        pauseBtn.textContent = "⏸️ Pause";
+        setSpeed();
+        api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop · P pause");
+        canvas.focus();
+      }
+      draw();
     }
     function gameOver() {
       over = true; if (dropT) clearInterval(dropT);
@@ -149,6 +169,14 @@ Arcade.register({
         else { ctx.strokeStyle = "#e3f7ec"; ctx.strokeRect(c * CELL, r * CELL, CELL, CELL); }
       }
       if (!over) piece.cells.forEach(([x, y]) => { if (y + piece.y >= 0) block(x + piece.x, y + piece.y, COLORS[piece.type]); });
+      if (paused) {
+        ctx.fillStyle = "rgba(20,40,30,.55)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "800 " + Math.floor(CELL * 1.2) + "px system-ui, sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("⏸ PAUSED", canvas.width / 2, canvas.height / 2);
+      }
     }
     function block(c, r, color) {
       ctx.fillStyle = color;
@@ -160,6 +188,8 @@ Arcade.register({
       const k = e.key;
       if (over && k === " ") { reset(); draw(); return; }
       if (over) return;
+      if (k === "p" || k === "P") { togglePause(); e.preventDefault(); return; }
+      if (paused) return;
       if (k === "ArrowLeft") { move(-1); draw(); }
       else if (k === "ArrowRight") { move(1); draw(); }
       else if (k === "ArrowDown") { softDrop(); draw(); }
@@ -171,17 +201,19 @@ Arcade.register({
     window.addEventListener("keydown", onKey);
     rotateBtn.addEventListener("click", () => {
       if (over) { reset(); draw(); canvas.focus(); return; }
+      if (paused) return;
       rotate(); draw(); canvas.focus();
     });
+    pauseBtn.addEventListener("click", () => { togglePause(); });
 
     // touch controls — move / soft-drop / hard-drop buttons (rotate is the side button)
     if (window.Touch && Touch.enabled) {
       const bar = Touch.bar();
       const bL = Touch.button("◀"), bR = Touch.button("▶"), bD = Touch.button("▼"), bDrop = Touch.button("⤓");
-      Touch.press(bL, () => { if (!over) { move(-1); draw(); } }, { repeat: true, interval: 120 });
-      Touch.press(bR, () => { if (!over) { move(1); draw(); } }, { repeat: true, interval: 120 });
-      Touch.press(bD, () => { if (!over) { softDrop(); draw(); } }, { repeat: true, interval: 70 });
-      Touch.press(bDrop, () => { if (!over) hardDrop(); });
+      Touch.press(bL, () => { if (!over && !paused) { move(-1); draw(); } }, { repeat: true, interval: 120 });
+      Touch.press(bR, () => { if (!over && !paused) { move(1); draw(); } }, { repeat: true, interval: 120 });
+      Touch.press(bD, () => { if (!over && !paused) { softDrop(); draw(); } }, { repeat: true, interval: 70 });
+      Touch.press(bDrop, () => { if (!over && !paused) hardDrop(); });
       [bL, bR, bD, bDrop].forEach((b) => bar.appendChild(b));
       // stack the play area and the control bar vertically (the board itself is a flex row)
       const col = api.el("div", "");
