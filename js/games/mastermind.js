@@ -7,11 +7,13 @@ Arcade.register({
   tags: ["Detective", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "low" }, // fewer guesses to crack the code ranks higher
   rules: [
     "A secret code of coloured pegs is hidden. Deduce it!",
     "Tap colours to fill your guess, then Submit.",
     "Each guessed peg is ringed: 🟨 yellow = right colour & spot, 🟩 green = right colour, wrong spot.",
-    "Crack the code before you run out of guesses.",
+    "Your past guesses stack up on the left with their clues — crack the code in as few guesses as you can.",
+    "The fewer guesses you need, the higher you place on the leaderboard.",
   ],
   options: [
     { key: "pegs", label: "Code length", type: "select", default: 4,
@@ -42,16 +44,33 @@ Arcade.register({
     }
 
     const wrap = api.el("div", "");
-    wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;width:" + Math.min(420, window.innerWidth - 40) + "px";
+    wrap.style.cssText = "display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%;max-width:680px";
+
+    // LEFT — running list of past guesses with their per-peg clues
+    const histPanel = api.el("div", "");
+    histPanel.style.cssText = "flex:0 0 auto;min-width:170px;max-width:300px;background:#fff;border-radius:14px;box-shadow:var(--shadow);" +
+      "padding:12px 14px;display:flex;flex-direction:column;gap:8px;max-height:440px;overflow-y:auto";
+    const histTitle = api.el("div", "", "🧩 Your guesses");
+    histTitle.style.cssText = "font-weight:800;font-size:14px;color:var(--ink)";
     const history = api.el("div", "");
-    history.style.cssText = "display:flex;flex-direction:column;gap:6px;width:100%;min-height:30px";
+    history.style.cssText = "display:flex;flex-direction:column;gap:6px";
+    const histEmpty = api.el("div", "", "No guesses yet — make your first!");
+    histEmpty.style.cssText = "font-size:13px;color:var(--ink-soft);font-style:italic";
+    history.appendChild(histEmpty);
+    histPanel.appendChild(histTitle); histPanel.appendChild(history);
+
+    // RIGHT — the current guess, colour palette and submit
+    const playCol = api.el("div", "");
+    playCol.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;flex:1 1 260px;min-width:240px";
     const guessRow = api.el("div", "");
     guessRow.style.cssText = "display:flex;gap:8px;justify-content:center;padding:8px;background:#fff;border-radius:12px;box-shadow:var(--shadow)";
     const palette = api.el("div", "");
     palette.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
     const submit = api.el("button", "btn primary", "✓ Submit guess");
     submit.addEventListener("click", check);
-    wrap.appendChild(history); wrap.appendChild(guessRow); wrap.appendChild(palette); wrap.appendChild(submit);
+    playCol.appendChild(guessRow); playCol.appendChild(palette); playCol.appendChild(submit);
+
+    wrap.appendChild(histPanel); wrap.appendChild(playCol);
     api.board.appendChild(wrap);
 
     function peg(colorIdx, size, hollow) {
@@ -91,17 +110,31 @@ Arcade.register({
       for (let i = 0; i < N; i++) if (states[i] !== "correct") { const j = cc.indexOf(g[i]); if (j >= 0) { states[i] = "present"; cc[j] = -2; } }
       return states;
     }
-    function addHistory(g, states) {
+    function addHistory(g, states, num) {
+      if (histEmpty.parentNode) histEmpty.remove();
       const row = api.el("div", "");
-      row.style.cssText = "display:flex;align-items:center;gap:10px;justify-content:center;background:#fff;border-radius:10px;padding:8px 10px;box-shadow:var(--shadow)";
+      row.style.cssText = "display:flex;align-items:center;gap:8px;background:var(--mint-50);border-radius:10px;padding:6px 8px";
+      const idx = api.el("span", "", "#" + num);
+      idx.style.cssText = "font-weight:800;font-size:12px;color:var(--ink-soft);width:24px;flex:none";
+      row.appendChild(idx);
+      const pegs = api.el("div", "");
+      pegs.style.cssText = "display:flex;gap:5px";
       g.forEach((c, i) => {
         // each guessed peg sits inside a coloured ring showing its per-position feedback
         const ring = api.el("div", "");
-        ring.style.cssText = "padding:4px;border-radius:50%;background:" + COL[states[i]];
-        ring.appendChild(peg(c, 26));
-        row.appendChild(ring);
+        ring.style.cssText = "padding:3px;border-radius:50%;background:" + COL[states[i]];
+        ring.appendChild(peg(c, 20));
+        pegs.appendChild(ring);
       });
+      row.appendChild(pegs);
+      // compact result tally: yellow = right spot, green = right colour wrong spot
+      const correct = states.filter((s) => s === "correct").length;
+      const present = states.filter((s) => s === "present").length;
+      const tally = api.el("span", "", "🟨" + correct + " 🟩" + present);
+      tally.style.cssText = "margin-left:auto;font-size:12px;font-weight:700;white-space:nowrap";
+      row.appendChild(tally);
       history.appendChild(row);
+      histPanel.scrollTop = histPanel.scrollHeight;
     }
     function board() {
       api.setScores([{ name: api.config.username, value: "guess " + (rows + 1) + "/" + MAX, color: "#2e9d6c" }]);
@@ -109,19 +142,32 @@ Arcade.register({
     function check() {
       if (over || guess.some((g) => g == null)) return;
       const states = feedbackStates(guess);
-      addHistory(guess, states);
+      addHistory(guess, states, rows + 1);
       rows++;
-      if (states.every((s) => s === "correct")) { over = true; reveal("🎉 Cracked it in " + rows + "! Brilliant detective work."); return; }
+      if (states.every((s) => s === "correct")) {
+        over = true;
+        api.submitScore(rows); // fewer guesses ranks higher (lower-is-better leaderboard)
+        reveal("🎉 Cracked it in " + rows + " " + (rows === 1 ? "guess" : "guesses") + "! Brilliant detective work.");
+        return;
+      }
       if (rows >= MAX) { over = true; reveal("💥 Out of guesses! The code was:"); return; }
       guess = Array(N).fill(null);
       renderGuess(); board();
       api.setStatus("Clues added — keep deducing! " + (MAX - rows) + " guesses left.");
     }
     function reveal(msg) {
+      if (histEmpty.parentNode) histEmpty.remove();
       const row = api.el("div", "");
-      row.style.cssText = "display:flex;gap:6px;justify-content:center;margin-top:6px";
-      code.forEach((c) => row.appendChild(peg(c, 30)));
+      row.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:6px;padding:6px 8px;border-radius:10px;background:#fff7da;border:1.5px solid #f3d24e";
+      const label = api.el("span", "", "🔑");
+      label.style.cssText = "font-size:13px;flex:none";
+      row.appendChild(label);
+      const pegs = api.el("div", "");
+      pegs.style.cssText = "display:flex;gap:5px";
+      code.forEach((c) => pegs.appendChild(peg(c, 22)));
+      row.appendChild(pegs);
       history.appendChild(row);
+      histPanel.scrollTop = histPanel.scrollHeight;
       submit.disabled = true;
       api.setStatus(msg);
       board();

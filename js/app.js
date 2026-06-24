@@ -66,7 +66,7 @@
       const span = WINDOWS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
       const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff && (!cat || e.cat === cat));
-      const lower = metric === "time"; // lower is better — keep the fastest
+      const lower = metric === "time" || metric === "low"; // lower is better (fastest time / fewest tries)
       const agg = {};
       events.forEach((e) => {
         const a = agg[e.name] || (agg[e.name] = { score: 0, ts: 0, cat: e.cat, set: false });
@@ -90,7 +90,7 @@
       const sums = {};
       Object.keys(all).forEach((gameId) => {
         const metric = gameMetric(gameId);
-        if (metric === "time") return; // time games use seconds (lower=better) — skip the cross-game average
+        if (metric === "time" || metric === "low") return; // lower-is-better units — skip the cross-game average
         const best = {};
         (all[gameId] || []).filter((e) => (e.ts || 0) >= cutoff).forEach((e) => {
           const b = best[e.name] || (best[e.name] = { v: 0, ts: 0 });
@@ -647,6 +647,7 @@
       row.appendChild(nameWrap);
       const val = metric === "wins" ? e.score + " " + (e.score === 1 ? T("win") : T("wins"))
         : metric === "time" ? fmtTime(e.score)
+        : metric === "low" ? e.score + " " + (e.score === 1 ? T("try") : T("tries"))
         : String(e.score);
       row.appendChild(el("span", "lb-score", val));
       ol.appendChild(row);
@@ -777,6 +778,7 @@
       banner.textContent = top
         ? (metric === "wins" ? T("recordWins", { name: top.name, n: top.score })
           : metric === "time" ? T("recordTime", { name: top.name, time: fmtTime(top.score) }) + (top.cat ? " [" + top.cat + "]" : "")
+          : metric === "low" ? T("recordLow", { name: top.name, n: top.score })
           : T("recordScore", { name: top.name, score: top.score }))
         : T("noRecord");
     };

@@ -2,7 +2,7 @@
  * Mint Arcade — global leaderboard API (Cloudflare Worker + KV)
  *
  * Routes:
- *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins|time>&cat=<optional>
+ *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins|time|low>&cat=<optional>
  *        → { top: [ { name, score, ts }, ... up to 10 ] }
  *          ts  = when the player achieved it (best-score time, or latest win)
  *          cat = optional category filter (e.g. Sudoku difficulty)
@@ -44,7 +44,7 @@ export default {
       const game = (url.searchParams.get("game") || "").slice(0, 40);
       const win = url.searchParams.get("window") || "all";
       const m = url.searchParams.get("metric");
-      const metric = m === "wins" ? "wins" : m === "time" ? "time" : "score";
+      const metric = m === "wins" ? "wins" : m === "time" ? "time" : m === "low" ? "low" : "score";
       const cat = (url.searchParams.get("cat") || "").slice(0, 24); // optional category filter
       if (!game) return json({ error: "missing game" }, 400);
 
@@ -52,7 +52,7 @@ export default {
       const events = raw ? JSON.parse(raw) : [];
       const span = SPANS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
-      const lower = metric === "time"; // lower is better — keep each player's fastest
+      const lower = metric === "time" || metric === "low"; // lower is better (fastest time / fewest tries)
 
       const agg = Object.create(null);
       for (const e of events) {
