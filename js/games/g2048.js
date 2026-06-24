@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // keep each player's highest score, ranked highest → lowest
   rules: [
     "Use Arrow keys / WASD to slide all tiles in one direction.",
     "Two tiles with the same number merge into their sum.",
@@ -22,15 +23,17 @@ Arcade.register({
 
   create(api) {
     const N = 4, goal = api.config.options.goal;
+    // Yellow/gold family — every number gets its own shade, light cream up to deep amber.
     const COLORS = {
-      0: "#e3f7ec", 2: "#d7f0e2", 4: "#bfe8cf", 8: "#9fe0bf", 16: "#6fcda0", 32: "#43b884",
-      64: "#2e9d6c", 128: "#f6d365", 256: "#f5b942", 512: "#f59e2b", 1024: "#ef8e1a", 2048: "#e67e22",
+      0: "#fdf6cf", 2: "#fef3bf", 4: "#fde98a", 8: "#fcdf5c", 16: "#fad431", 32: "#f6c90e",
+      64: "#f0b800", 128: "#e8a600", 256: "#dd9400", 512: "#d08200", 1024: "#c06f00", 2048: "#b25e00",
     };
     let grid, score = 0, best = 0, over = false, won = false;
 
     const cell = Math.floor(Math.min(400, window.innerWidth - 60) / N) - 10;
     const board = api.el("div", "grid-board");
     board.style.gridTemplateColumns = "repeat(" + N + ",1fr)";
+    board.style.background = "#f6df8d"; // warm gold frame to match the yellow tiles
     const tiles = [];
     for (let i = 0; i < N * N; i++) {
       const t = api.el("div", "cell");
@@ -71,8 +74,8 @@ Arcade.register({
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         const v = grid[r][c], t = tiles[r * N + c];
         t.textContent = v || "";
-        t.style.background = COLORS[v] || "#e67e22";
-        t.style.color = v >= 8 ? "#fff" : "var(--ink)";
+        t.style.background = COLORS[v] || "#b25e00";
+        t.style.color = v >= 128 ? "#fff" : "#6b4f00";
         t.style.fontSize = (v >= 1000 ? cell * 0.34 : cell * 0.42) + "px";
       }
       best = Math.max(best, score);
