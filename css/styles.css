@@ -226,7 +226,10 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
 .lb-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--radius-sm);
   background:var(--mint-50);border:1.5px solid var(--mint-100)}
 .lb-row .lb-rank{font-weight:800;font-size:18px;width:42px;text-align:center;color:var(--mint-700);flex:none}
-.lb-row .lb-name{font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-row .lb-name{font-weight:700;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lb-row .lb-name .lb-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-row .lb-when{font-weight:600;font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.game-lb .lb-row .lb-when{font-size:11px}
 .lb-row .lb-score{font-weight:800;color:var(--mint-700);font-size:18px}
 .lb-row.top1{background:linear-gradient(180deg,#fff7da,#ffeeb0);border-color:#f3d24e}
 .lb-row.top2{background:linear-gradient(180deg,#f4f6f8,#e6eaef);border-color:#cfd6de}

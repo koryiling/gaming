@@ -59,17 +59,24 @@
       if (list.length > 1000) d[gameId] = list.slice(-1000);
       this.save(d);
     },
-    // top `limit` within a time window; metric "wins" sums wins, otherwise max score per player
+    // top `limit` within a time window; metric "wins" sums wins, otherwise max score per player.
+    // each row also carries `ts` — when the player achieved it (best-score time, or latest win).
     top(gameId, win, metric, limit) {
       const span = WINDOWS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
       const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff);
       const agg = {};
       events.forEach((e) => {
-        if (metric === "wins") agg[e.name] = (agg[e.name] || 0) + (e.win || 0);
-        else { const s = Number(e.score) || 0; if (!(e.name in agg) || s > agg[e.name]) agg[e.name] = s; }
+        const a = agg[e.name] || (agg[e.name] = { score: 0, ts: 0 });
+        if (metric === "wins") {
+          a.score += (e.win || 0);
+          if (e.win && (e.ts || 0) > a.ts) a.ts = e.ts || 0; // most recent win
+        } else {
+          const s = Number(e.score) || 0;
+          if (s > a.score || a.ts === 0) { a.score = s; a.ts = e.ts || 0; } // time of the best score
+        }
       });
-      return Object.keys(agg).map((name) => ({ name, score: agg[name] }))
+      return Object.keys(agg).map((name) => ({ name, score: agg[name].score, ts: agg[name].ts }))
         .filter((r) => (metric === "wins" ? r.score > 0 : true))
         .sort((a, b) => b.score - a.score).slice(0, limit || 50);
     },
@@ -83,15 +90,22 @@
         const metric = gameMetric(gameId);
         const best = {};
         (all[gameId] || []).filter((e) => (e.ts || 0) >= cutoff).forEach((e) => {
-          if (metric === "wins") best[e.name] = (best[e.name] || 0) + (e.win || 0);
-          else { const s = Number(e.score) || 0; if (!(e.name in best) || s > best[e.name]) best[e.name] = s; }
+          const b = best[e.name] || (best[e.name] = { v: 0, ts: 0 });
+          if (metric === "wins") {
+            b.v += (e.win || 0);
+            if (e.win && (e.ts || 0) > b.ts) b.ts = e.ts || 0;
+          } else {
+            const s = Number(e.score) || 0;
+            if (s > b.v || b.ts === 0) { b.v = s; b.ts = e.ts || 0; }
+          }
         });
         Object.keys(best).forEach((name) => {
-          const ps = sums[name] || (sums[name] = { sum: 0, count: 0 });
-          ps.sum += best[name]; ps.count++;
+          const ps = sums[name] || (sums[name] = { sum: 0, count: 0, ts: 0 });
+          ps.sum += best[name].v; ps.count++;
+          if (best[name].ts > ps.ts) ps.ts = best[name].ts; // latest achievement across games
         });
       });
-      return Object.keys(sums).map((name) => ({ name, score: Math.round(sums[name].sum / sums[name].count), games: sums[name].count }))
+      return Object.keys(sums).map((name) => ({ name, score: Math.round(sums[name].sum / sums[name].count), games: sums[name].count, ts: sums[name].ts }))
         .sort((a, b) => b.score - a.score).slice(0, limit || 50);
     },
     clear(gameId) { const d = this.all(); delete d[gameId]; this.save(d); },
@@ -583,6 +597,25 @@
   }
 
   /* ---------- leaderboard rendering ---------- */
+  // format an achievement timestamp into a short, locale-aware "when" label
+  function fmtWhen(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return "";
+    const now = Date.now();
+    const diff = now - ts;
+    if (diff >= 0 && diff < 6048e5) { // within the last week → relative
+      const mins = Math.floor(diff / 6e4);
+      if (mins < 1) return T("justNow");
+      if (mins < 60) return T("minsAgo", { n: mins });
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return T("hrsAgo", { n: hrs });
+      const days = Math.floor(hrs / 24);
+      return T("daysAgo", { n: days });
+    }
+    try { return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
+    catch (e) { return d.toLocaleDateString(); }
+  }
   function renderRows(ol, list, metric, emptyMsg) {
     ol.innerHTML = "";
     if (!list.length) { ol.appendChild(el("li", "lb-empty", emptyMsg)); return; }
@@ -590,7 +623,15 @@
       const row = el("li", "lb-row" + (i < 3 ? " top" + (i + 1) : ""));
       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1);
       row.appendChild(el("span", "lb-rank", medal));
-      row.appendChild(el("span", "lb-name", e.name));
+      const nameWrap = el("span", "lb-name");
+      nameWrap.appendChild(el("span", "lb-name-text", e.name));
+      const when = fmtWhen(e.ts);
+      if (when) {
+        const w = el("span", "lb-when", "🕒 " + when);
+        if (e.ts) { const full = new Date(e.ts); if (!isNaN(full.getTime())) w.title = full.toLocaleString(); }
+        nameWrap.appendChild(w);
+      }
+      row.appendChild(nameWrap);
       const val = metric === "wins" ? e.score + " " + (e.score === 1 ? T("win") : T("wins")) : String(e.score);
       row.appendChild(el("span", "lb-score", val));
       ol.appendChild(row);

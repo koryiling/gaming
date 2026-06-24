@@ -3,7 +3,8 @@
  *
  * Routes:
  *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins>
- *        → { top: [ { name, score }, ... up to 10 ] }
+ *        → { top: [ { name, score, ts }, ... up to 10 ] }
+ *          ts = when the player achieved it (best-score time, or latest win)
  *   POST /scores   body: { game, name, score }  or  { game, name, win: 1 }
  *        → { ok: true }
  *
@@ -52,11 +53,17 @@ export default {
       const agg = Object.create(null);
       for (const e of events) {
         if ((e.t || 0) < cutoff) continue;
-        if (metric === "wins") agg[e.n] = (agg[e.n] || 0) + (e.w || 0);
-        else { const s = Number(e.s) || 0; if (!(e.n in agg) || s > agg[e.n]) agg[e.n] = s; }
+        const a = agg[e.n] || (agg[e.n] = { score: 0, ts: 0 });
+        if (metric === "wins") {
+          a.score += (e.w || 0);
+          if (e.w && (e.t || 0) > a.ts) a.ts = e.t || 0; // most recent win
+        } else {
+          const s = Number(e.s) || 0;
+          if (s > a.score || a.ts === 0) { a.score = s; a.ts = e.t || 0; } // time of the best score
+        }
       }
       const top = Object.keys(agg)
-        .map((n) => ({ name: n, score: agg[n] }))
+        .map((n) => ({ name: n, score: agg[n].score, ts: agg[n].ts }))
         .filter((r) => (metric === "wins" ? r.score > 0 : true))
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
