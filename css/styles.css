@@ -174,7 +174,9 @@ body{
 .game-lb .lb-row .lb-score{font-size:16px}
 @media (max-width:760px){
   .play-main,.play-main.lb-left{flex-direction:column;align-items:stretch}
-  .game-lb{width:auto}
+  /* hide the side leaderboard on small screens so the game board can use the full
+     width and stay fully visible — it's still reachable via the 🏆 top-bar button */
+  .game-lb{display:none}
 }
 .status-line{text-align:center;margin-top:16px;font-size:17px;font-weight:600;min-height:24px;color:var(--mint-700)}
 

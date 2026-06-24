@@ -350,18 +350,6 @@ window.__GAME_I18N = {
         "Setiap teka-teki boleh diselesaikan — lebih sedikit gerakan bermakna skor lebih tinggi!",
       ],
     },
-    pizzatycoon: {
-      name: "Pizza Tycoon",
-      tagline: "Uruskan kedai: bakar pizza panas, hantar pantas ke pelanggan lapar sebelum mereka beredar, dan bina empayar pizza.",
-      rules: [
-        "Gerakkan cef 🧑‍🍳 anda dengan kekunci anak panah / WASD (atau pad di skrin).",
-        "Pijak ketuhar 🔥 untuk mengambil pizza yang baru dibakar, kemudian bawa ke pelanggan 🙋.",
-        "Pelanggan menjadi tidak sabar — gelang di sekeliling mereka menyusut. Layan pantas untuk tip 💸 lebih besar!",
-        "Rangkaikan penghantaran pantas untuk membina pengganda kombo 🔥. Tamat masa memutuskan rentetan.",
-        "Kumpul cukup untuk mencapai 📅 hari seterusnya — lebih ramai pelanggan tiba. Belanjakan wang pada naik taraf.",
-        "Skor anda ialah jumlah wang diperoleh. Bina empayar terbesar yang anda mampu!",
-      ],
-    },
   },
   zh: {
     snake: {
@@ -711,18 +699,6 @@ window.__GAME_I18N = {
         "点击一盏灯，翻转它和它的四个相邻灯（上/下/左/右）。",
         "目标：把每一盏灯都关掉。",
         "每个谜题都有解——步数越少得分越高！",
-      ],
-    },
-    pizzatycoon: {
-      name: "披萨大亨",
-      tagline: "掌管店面：烤出热腾腾的披萨，赶在饥饿的顾客发火离开前送到，打造你的披萨帝国。",
-      rules: [
-        "用方向键 / WASD（或屏幕上的方向盘）移动你的厨师 🧑‍🍳。",
-        "踩到烤箱 🔥 上取走刚出炉的披萨，然后走到顾客 🙋 身边送出。",
-        "顾客会变得不耐烦——他们周围的圆环会逐渐耗尽。送得越快，💸 小费越多！",
-        "连续快速送达可累积 🔥 连击倍数。一旦超时，连击中断。",
-        "赚够钱即可进入下一 📅 天——会有更多顾客到来。把现金花在升级上。",
-        "你的得分是赚到的总金额。尽你所能打造最大的帝国！",
       ],
     },
   }

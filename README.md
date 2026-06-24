@@ -1,6 +1,6 @@
 # 🌿 Mint Arcade
 
-A light, mint-green collection of **36 mini games** you can play right in the browser —
+A light, mint-green collection of **35 mini games** you can play right in the browser —
 solo or with friends on the same screen. No build step, no dependencies.
 
 ## ▶ How to run
@@ -59,7 +59,6 @@ Or publish it free with **GitHub Pages**:
 | 📝 Word Recall | 1 | memorise the flashed word, type it back |
 | 💪 Tug of War | 2 | mash your key to drag the rope across the line |
 | 💡 Lights Out | 1 | toggle lights and neighbours until all go dark |
-| 🍕 Pizza Tycoon | 1 | serve slices & buy upgrades to grow a pizza empire |
 
 > The leaderboard records high scores (and win tallies for duels like Battleship, War, Dice Duel),
 > filterable by **Today / Week / Month / All time**, shown both in a hub modal and beside each game.

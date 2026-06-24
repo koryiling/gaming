@@ -430,7 +430,15 @@
     if (!natW || !natH) return;
     const availW = wrap.clientWidth || (window.innerWidth - 28);
     const top = wrap.getBoundingClientRect().top;
-    const availH = window.innerHeight - top - 26;
+    // reserve room below the board so the status line (and, when the leaderboard
+    // stacks beneath the board on narrow screens, that panel too) stay on screen
+    const statusEl = $("#status-line");
+    let reserve = (statusEl ? statusEl.offsetHeight : 0) + 36;
+    const main = $("#play-main");
+    const stacked = main && getComputedStyle(main).flexDirection.indexOf("column") === 0;
+    const lb = $("#game-lb");
+    if (stacked && lb) reserve += lb.offsetHeight + 18;
+    const availH = window.innerHeight - top - reserve;
     let s = Math.min(availW / natW, availH / natH);
     if (!isFinite(s) || s <= 0) s = 1;
     if (s > 1) s = 1;
