@@ -1,23 +1,25 @@
-/* Crazy Eights — 2-player hot-seat card shedding */
+/* Crazy Eights — play solo vs the computer, or 2-player hot-seat */
 Arcade.register({
   id: "crazyeights",
   name: "Crazy Eights",
   emoji: "🃏",
   tagline: "Shed your hand by matching suit or rank — and unleash wild 8s to switch the suit.",
   tags: ["Cards", "Duel", "Family"],
-  minPlayers: 2,
+  minPlayers: 1,
   maxPlayers: 2,
-  leaderboard: { type: "wins" },
+  leaderboard: { type: "wins" }, // counts wins; each victory adds one (computer wins aren't recorded)
   rules: [
     "Each player starts with 7 cards; one card starts the discard pile.",
     "On your turn, play a card matching the top card's suit or rank.",
     "An 8 is wild — play it anytime and choose the next suit.",
     "Can't play? Draw a card and your turn passes. First to empty their hand wins!",
+    "Play 1 vs the computer 🤖, or 2 against a friend on one device.",
   ],
   options: [],
 
   create(api) {
-    const names = api.config.players;
+    const vsAI = api.config.players.length === 1;
+    const names = vsAI ? [api.config.players[0], "🤖 Computer"] : api.config.players;
     const colors = [api.colors[0], api.colors[4]];
     const SUITS = ["♠", "♥", "♦", "♣"], RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
     const EIGHT = 7; // index of rank "8"
@@ -101,14 +103,47 @@ Arcade.register({
     function finishTurn() {
       if (hands[turn].length === 0) {
         over = true;
-        api.recordWin(names[turn]);
+        if (api.recordWin && !(vsAI && turn === 1)) api.recordWin(names[turn]); // don't record computer wins
         phase = "over"; root.innerHTML = "";
         root.appendChild(topArea());
-        api.setStatus("🏆 " + names[turn] + " shed every card and wins! 🎉 (win recorded)");
+        api.setStatus(vsAI && turn === 1
+          ? "🤖 Computer shed every card and wins! Hit Restart to try again."
+          : "🏆 " + names[turn] + " shed every card and wins! 🎉 (win recorded)");
         score();
         return;
       }
-      turn = 1 - turn; gate();
+      turn = 1 - turn; nextTurnUI();
+    }
+    // route to the right UI for whoever's turn it is: computer auto-plays, humans get a screen
+    function nextTurnUI() {
+      if (vsAI) { if (turn === 1) aiTurn(); else renderTurn(); }
+      else gate();
+    }
+    function aiTurn() {
+      phase = "ai"; root.innerHTML = "";
+      root.appendChild(topArea());
+      const p = api.el("p", "", "🤖 Computer is thinking…");
+      p.style.cssText = "font-size:18px;font-weight:600;text-align:center;color:var(--ink)";
+      root.appendChild(p);
+      api.setStatus("🤖 Computer's turn…"); score();
+      setTimeout(aiPlay, 700);
+    }
+    function aiPlay() {
+      if (over) return;
+      const hand = hands[1];
+      let i = hand.findIndex((c) => playable(c) && c.r !== EIGHT); // keep wild 8s in reserve
+      if (i < 0) i = hand.findIndex((c) => playable(c));
+      if (i < 0) { hands[1].push(drawCard()); api.toast("🤖 Computer drew a card"); turn = 0; nextTurnUI(); return; }
+      const c = hands[1].splice(i, 1)[0];
+      discard.push(c); curRank = c.r; curSuit = c.s;
+      if (c.r === EIGHT) {
+        const counts = [0, 0, 0, 0];
+        hands[1].forEach((x) => counts[x.s]++);
+        let best = 0; for (let s = 1; s < 4; s++) if (counts[s] > counts[best]) best = s;
+        curSuit = best;
+        api.toast("🤖 Computer played 8 → " + SUITS[best]);
+      }
+      finishTurn();
     }
 
     function playCard(i) {
@@ -136,11 +171,11 @@ Arcade.register({
       if (phase !== "play") return;
       hands[turn].push(drawCard());
       api.toast(names[turn] + " drew a card");
-      turn = 1 - turn; gate();
+      turn = 1 - turn; nextTurnUI();
     }
 
     score();
-    gate();
+    nextTurnUI();
     return { stop() {} };
   },
 });

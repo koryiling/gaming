@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Arcade", "Reflex", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "low" }, // fastest time to clear all bricks ranks highest (per game, not summed)
   rules: [
     "Move the paddle with ← / → or your mouse.",
     "Keep the ball in play and clear all the bricks.",
@@ -29,19 +30,19 @@ Arcade.register({
     const ROWS = api.config.options.rows, COLS = 9;
     const BW = (W - 20) / COLS, BH = 22, TOP = 40;
     const BRICK_COLORS = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#16a085", "#3498db", "#9b59b6"];
-    let bricks, paddle, ball, score, lives, alive, won, raf, started;
+    let bricks, paddle, ball, score, lives, alive, won, raf, started, startT = 0;
     const keys = {};
 
     function reset() {
       bricks = [];
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) bricks.push({ x: 10 + c * BW, y: TOP + r * (BH + 4), r, alive: true });
       paddle = { x: W / 2 - 45, w: 90, h: 12 };
-      resetBall(); score = 0; lives = api.config.options.lives; alive = true; won = false; started = false;
+      resetBall(); score = 0; lives = api.config.options.lives; alive = true; won = false; started = false; startT = 0;
       updateScore();
       api.setStatus("Move with ← → or mouse. Click / press Space to launch 🚀");
     }
     function resetBall() { ball = { x: W / 2, y: H - 40, vx: 0, vy: 0, r: 7 }; started = false; }
-    function launch() { if (started || !alive) return; started = true; ball.vx = (Math.random() < 0.5 ? -1 : 1) * 3.4; ball.vy = -4.2; }
+    function launch() { if (started || !alive) return; started = true; if (!startT) startT = performance.now(); ball.vx = (Math.random() < 0.5 ? -1 : 1) * 3.4; ball.vy = -4.2; }
     function updateScore() {
       api.setScores([{ name: api.config.username, value: score, color: "#2e9d6c" }, { name: "Lives", value: "❤".repeat(Math.max(0, lives)), color: "#e74c3c" },
         { name: "Bricks", value: bricks.filter((b) => b.alive).length, color: "#e67e22" }]);
@@ -64,7 +65,12 @@ Arcade.register({
         for (const b of bricks) if (b.alive && ball.x > b.x && ball.x < b.x + BW - 4 && ball.y - ball.r < b.y + BH && ball.y + ball.r > b.y) {
           b.alive = false; ball.vy *= -1; score += (ROWS - b.r) * 10; updateScore(); break;
         }
-        if (bricks.every((b) => !b.alive)) { won = true; alive = false; api.setStatus("🎉 Cleared every brick — you win with " + score + "! Restart to replay."); }
+        if (bricks.every((b) => !b.alive)) {
+          won = true; alive = false;
+          const secs = Math.max(1, Math.round((performance.now() - startT) / 1000));
+          if (api.submitScore) api.submitScore(secs); // fastest clear ranks highest (lower is better)
+          api.setStatus("🎉 Cleared every brick in " + secs + "s with " + score + " pts! Fastest time tops the board 🏆. Restart to replay.");
+        }
         if (ball.y > H) {
           lives--; updateScore();
           if (lives <= 0) { alive = false; api.setStatus("💥 Game over — score <b>" + score + "</b>. Press Space or Restart."); }

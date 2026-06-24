@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Dice", "Family", "Quick"],
   minPlayers: 2,
   maxPlayers: 4,
+  leaderboard: { type: "wins" }, // counts wins; each victory adds one
   rules: [
     "On your turn, roll the die as many times as you dare.",
     "Each roll adds to your running turn total.",
@@ -70,7 +71,7 @@ Arcade.register({
     function hold() {
       if (over || rolling) return;
       banked[turn] += running; board();
-      if (banked[turn] >= target) { over = true; rollBtn.disabled = holdBtn.disabled = true; api.setStatus("🏆 " + names[turn] + " banked " + banked[turn] + " and wins! 🎉"); return; }
+      if (banked[turn] >= target) { over = true; rollBtn.disabled = holdBtn.disabled = true; if (api.recordWin) api.recordWin(names[turn]); api.setStatus("🏆 " + names[turn] + " banked " + banked[turn] + " and wins! 🎉 (win recorded)"); return; }
       api.setStatus("🏦 " + names[turn] + " banked " + running + " points.");
       setTimeout(nextTurn, 700);
     }

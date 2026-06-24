@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Detective", "Number", "Classic", "Quick", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "low" }, // fewest guesses to crack the number ranks highest (per game, not summed)
   rules: [
     "I'm thinking of a secret number in the chosen range.",
     "Type a guess and press Enter — I'll say higher 📈 or lower 📉.",
@@ -43,9 +44,9 @@ Arcade.register({
       tries++;
       if (v === secret) {
         over = true;
-        const sc = Math.max(5, 120 - (tries - 1) * 10);
-        api.setStatus("🎉 Cracked it in " + tries + "! The number was <b>" + secret + "</b>. Score " + sc + ". Hit Restart for a new case.");
-        api.setScores([{ name: api.config.username, value: sc, color: api.colors[0] }]);
+        if (api.submitScore) api.submitScore(tries); // fewest guesses ranks highest (lower is better)
+        api.setStatus("🎉 Cracked it in " + tries + (tries === 1 ? " try" : " tries") + "! The number was <b>" + secret + "</b>. Fewer guesses ranks higher 🏆. Hit Restart for a new case.");
+        api.setScores([{ name: api.config.username, value: tries + (tries === 1 ? " try" : " tries"), color: api.colors[0] }]);
         return;
       }
       if (v < secret) { lo = Math.max(lo, v + 1); api.setStatus("📈 Higher than " + v + "…"); }

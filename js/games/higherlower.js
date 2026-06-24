@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Cards", "Quick", "Family", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // your best streak in one game ranks highest → lowest (not summed)
   rules: [
     "A card is shown (Ace low, King high).",
     "Guess whether the next card will be higher or lower.",
@@ -47,6 +48,7 @@ Arcade.register({
       else {
         over = true; render();
         up.disabled = down.disabled = true;
+        if (api.submitScore) api.submitScore(streak); // best streak in one game ranks highest
         api.setStatus("❌ It was " + RANKS[current.r] + SUITS[current.s] + ". Final streak " + streak + ". Hit Restart to play again.");
       }
     }

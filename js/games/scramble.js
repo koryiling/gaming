@@ -7,10 +7,12 @@ Arcade.register({
   tags: ["Word", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // your best single game ranks highest → lowest (not summed)
   rules: [
     "The letters of a hidden word are shuffled.",
     "Type the unscrambled word and press Enter.",
-    "Solve as many as you can — each solve is worth points (use Skip if stuck).",
+    "10 words per game — each solve is worth points (use Skip if stuck).",
+    "The leaderboard keeps your highest score in a single game.",
   ],
   options: [
     { key: "len", label: "Word length", type: "select", default: 5,
@@ -24,8 +26,9 @@ Arcade.register({
       6: ["garden", "planet", "cherry", "dragon", "forest", "guitar", "island", "jungle", "meadow", "orange", "parrot", "rocket", "silver", "turtle", "violet", "wonder", "castle", "flower", "sunset", "candle"],
     };
     const LEN = api.config.options.len;
+    const ROUNDS = 10; // 10 words per game
     const pool = WORDS[LEN].slice();
-    let score = 0, solved = 0, answer = "", over = false;
+    let score = 0, solved = 0, round = 0, answer = "", over = false;
 
     const wrap = api.el("div", "");
     wrap.style.cssText = "display:flex;flex-direction:column;gap:16px;align-items:center;padding:10px";
@@ -47,8 +50,21 @@ Arcade.register({
       while (a.join("") === w);
       return a;
     }
+    function setScore() {
+      api.setScores([
+        { name: api.config.username, value: score, color: api.colors[0] },
+        { name: "Word", value: Math.min(round, ROUNDS) + "/" + ROUNDS, color: "#3498db" },
+      ]);
+    }
+    function finish() {
+      over = true; input.disabled = go.disabled = skip.disabled = true;
+      if (api.submitScore) api.submitScore(score); // best single game ranks highest
+      setScore();
+      api.setStatus("🏁 Done! Solved " + solved + "/" + ROUNDS + ", score <b>" + score + "</b>. Hit Restart to play again.");
+    }
     function next() {
-      if (!pool.length) { over = true; input.disabled = go.disabled = skip.disabled = true; api.setStatus("🏁 No more words! Final score " + score + ". Hit Restart for more."); return; }
+      if (round >= ROUNDS || !pool.length) { finish(); return; }
+      round++;
       answer = pool.splice(Math.random() * pool.length | 0, 1)[0].toUpperCase();
       jumble.innerHTML = "";
       shuffle(answer).forEach((ch) => {
@@ -57,7 +73,7 @@ Arcade.register({
         jumble.appendChild(t);
       });
       input.value = ""; input.focus();
-      api.setScores([{ name: api.config.username, value: score, color: api.colors[0] }]);
+      setScore();
     }
     function submit() {
       if (over) return;

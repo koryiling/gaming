@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Board", "Strategy", "Duel"],
   minPlayers: 2,
   maxPlayers: 2,
+  leaderboard: { type: "wins" }, // counts wins; each victory adds one
   rules: [
     "Move diagonally forward to an empty dark square.",
     "Jump over an adjacent enemy piece (to an empty square beyond) to capture it.",
@@ -127,12 +128,12 @@ Arcade.register({
     }
     function gameOverCheck() {
       const cnt = [0, 0]; grid.forEach((row) => row.forEach((x) => { if (x) cnt[x.p]++; }));
-      if (!cnt[turn]) { over = true; api.setStatus("🏆 " + names[1 - turn] + " captured everything — win! 🎉"); return true; }
+      if (!cnt[turn]) { over = true; if (api.recordWin) api.recordWin(names[1 - turn]); api.setStatus("🏆 " + names[1 - turn] + " captured everything — win! 🎉"); return true; }
       const hasMove = allCaptures(turn).length || (() => {
         for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] && grid[r][c].p === turn && simpleFrom(r, c).length) return true;
         return false;
       })();
-      if (!hasMove) { over = true; api.setStatus("🏆 " + names[1 - turn] + " wins — " + names[turn] + " has no moves!"); return true; }
+      if (!hasMove) { over = true; if (api.recordWin) api.recordWin(names[1 - turn]); api.setStatus("🏆 " + names[1 - turn] + " wins — " + names[turn] + " has no moves!"); return true; }
       return false;
     }
 

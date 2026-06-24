@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Board", "Strategy", "Duel"],
   minPlayers: 1,
   maxPlayers: 2,
+  leaderboard: { type: "wins" }, // counts wins; each victory adds one (computer wins aren't recorded)
   rules: [
     "Take turns placing a stone on any empty intersection.",
     "Get five of your stones in a row — horizontally, vertically, or diagonally.",
@@ -62,7 +63,7 @@ Arcade.register({
     function placeStone(r, c, p) {
       grid[r][c] = p; render();
       const w = winLine(r, c, p);
-      if (w) { over = true; w.forEach(([rr, cc]) => (cells[rr * N + cc].style.background = "#9fe0bf")); api.setStatus("🏆 " + STONE[p] + " " + names[p] + " gets five — win! 🎉"); board(); return true; }
+      if (w) { over = true; w.forEach(([rr, cc]) => (cells[rr * N + cc].style.background = "#9fe0bf")); if (api.recordWin && !(vsAI && p === 1)) api.recordWin(names[p]); api.setStatus("🏆 " + STONE[p] + " " + names[p] + " gets five — win! 🎉"); board(); return true; }
       if (grid.every((row) => row.every((x) => x >= 0))) { over = true; api.setStatus("🤝 Board full — a draw!"); return true; }
       return false;
     }

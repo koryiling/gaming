@@ -14,7 +14,9 @@ Arcade.register({
     "Hit a pipe or the ground and it's over — try again!",
   ],
   options: [
-    { key: "gap", label: "Gap size", type: "select", default: 150,
+    { key: "bird", label: "Flyer", type: "select", default: "🐤",
+      choices: [{ label: "🐤 Chick", value: "🐤" }, { label: "🐷 Pig", value: "🐷" }, { label: "🐶 Dog", value: "🐶" }, { label: "🐻 Bear", value: "🐻" }, { label: "🐧 Penguin", value: "🐧" }] },
+    { key: "gap", label: "Gap size", type: "select", default: 180,
       choices: [{ label: "Roomy", value: 180 }, { label: "Normal", value: 150 }, { label: "Tight", value: 120 }] },
   ],
 
@@ -25,7 +27,9 @@ Arcade.register({
     api.board.appendChild(canvas);
     const ctx = canvas.getContext("2d");
 
-    const GAP = api.config.options.gap, PIPE_W = 56, SPEED = 2.4, GRAV = 0.42, FLAP = -7;
+    // gentler physics + wider pipe spacing so the flyer is easier to control
+    const GAP = api.config.options.gap, PIPE_W = 56, SPEED = 2.0, GRAV = 0.34, FLAP = -6.6;
+    const BIRD = api.config.options.bird || "🐤";
     let bird, pipes, score, best = 0, alive, started, raf, frame;
 
     function reset() {
@@ -45,7 +49,7 @@ Arcade.register({
       for (let i = 0; i < 3; i++) { const cx = (W - ((frame * 0.3 + i * 160) % (W + 80))); ctx.beginPath(); ctx.arc(cx, 60 + i * 40, 22, 0, 7); ctx.fill(); }
       if (started) {
         bird.v += GRAV; bird.y += bird.v;
-        if (frame % 95 === 0) spawn();
+        if (frame % 115 === 0) spawn();
         pipes.forEach((p) => (p.x -= SPEED));
         pipes = pipes.filter((p) => p.x + PIPE_W > 0);
         for (const p of pipes) {
@@ -62,7 +66,7 @@ Arcade.register({
       ctx.fillStyle = "#247a55"; ctx.fillRect(0, H - 8, W, 8);
       // bird
       ctx.font = "30px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(Math.max(-0.5, Math.min(1, bird.v / 12))); ctx.fillText("🐤", 0, 0); ctx.restore();
+      ctx.save(); ctx.translate(bird.x, bird.y); ctx.rotate(Math.max(-0.5, Math.min(1, bird.v / 12))); ctx.fillText(BIRD, 0, 0); ctx.restore();
       // score
       ctx.fillStyle = "#fff"; ctx.font = "bold 34px sans-serif"; ctx.fillText(score, W / 2, 50);
       if (alive) raf = requestAnimationFrame(step);

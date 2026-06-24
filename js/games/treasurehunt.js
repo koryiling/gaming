@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Detective", "Number", "Classic", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "low" }, // fewest digs to find the treasure ranks highest (per game, not summed)
   rules: [
     "Treasure 💎 is buried in one square of the grid.",
     "Click a square to dig — the colour shows how close you are.",
@@ -54,9 +55,9 @@ Arcade.register({
       if (dist === 0) {
         over = true;
         btn.textContent = "💎";
-        const sc = Math.max(10, 200 - (digs - 1) * 12);
-        api.setStatus("🎉 Treasure found in " + digs + " digs! Score " + sc + ". Restart to bury a new one.");
-        api.setScores([{ name: api.config.username, value: sc, color: api.colors[0] }]);
+        if (api.submitScore) api.submitScore(digs); // fewest digs ranks highest (lower is better)
+        api.setStatus("🎉 Treasure found in " + digs + " digs! Fewer digs ranks higher 🏆. Restart to bury a new one.");
+        api.setScores([{ name: api.config.username, value: digs + " digs", color: api.colors[0] }]);
         return;
       }
       btn.textContent = dist <= 1 ? "🔥" : dist <= 2 ? "♨️" : dist <= 4 ? "🌤️" : "❄️";
