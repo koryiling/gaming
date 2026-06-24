@@ -33,7 +33,9 @@ Arcade.register({
     const secret = digits.slice(0, LEN).join("");
     let tries = 0, over = false, cur = "";
 
-    const wide = window.innerWidth >= 560;
+    // History always sits to the LEFT of the keypad, even on phones — the board
+    // auto-scales to fit narrow screens, so we never stack it on top.
+    const wide = true;
     const HTILE = 32;
 
     // ----- history panel (left) -----
@@ -80,10 +82,10 @@ Arcade.register({
     rightCol.appendChild(slots); rightCol.appendChild(pad);
 
     const wrap = api.el("div", "");
-    wrap.style.cssText = wide
-      ? "display:flex;gap:18px;align-items:flex-start;justify-content:center;width:100%"
-      : "display:flex;flex-direction:column;gap:14px;align-items:center;width:100%;max-width:360px";
-    wrap.appendChild(histPanel);   // history on the left (or on top when stacked)
+    // Content-sized row (no width:100%) so the board auto-fit can scale the whole
+    // history+keypad layout to fit narrow phones without clipping the left panel.
+    wrap.style.cssText = "display:flex;gap:14px;align-items:flex-start;justify-content:center";
+    wrap.appendChild(histPanel);   // history always on the left
     wrap.appendChild(rightCol);
     api.board.appendChild(wrap);
 

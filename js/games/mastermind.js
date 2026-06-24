@@ -44,7 +44,10 @@ Arcade.register({
     }
 
     const wrap = api.el("div", "");
-    wrap.style.cssText = "display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%;max-width:680px";
+    // nowrap + content width keeps the guess history on the LEFT and the play area on the
+    // RIGHT even on phones (instead of wrapping the panel on top); the board auto-scales to
+    // fit narrow widths. Avoid width:100% so the auto-fit measures the true content width.
+    wrap.style.cssText = "display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:nowrap;max-width:680px";
 
     // LEFT — running list of past guesses with their per-peg clues
     const histPanel = api.el("div", "");

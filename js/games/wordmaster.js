@@ -37,7 +37,9 @@ Arcade.register({
 
     // outer: play column (board + keyboard) on the left, history panel on the right
     const outer = api.el("div", "");
-    outer.style.cssText = "display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap";
+    // nowrap keeps the history panel on the LEFT and the board/keyboard on the RIGHT even on
+    // phones (instead of wrapping the panel on top); the board auto-scales to fit width.
+    outer.style.cssText = "display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:nowrap";
     const wrap = api.el("div", "");
     wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:14px";
     // 10 guesses laid out in two columns of 5 (left = tries 1–5, right = 6–10)
