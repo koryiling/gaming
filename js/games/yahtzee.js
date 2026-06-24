@@ -46,29 +46,54 @@ Arcade.register({
     const sheets = names.map(() => ({}));
     let turn = 0, dice = [1, 1, 1, 1, 1], held = [false, false, false, false, false], rolls = 0, turnDone = 0;
 
-    const wrap = api.el("div", "");
-    wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:14px;width:" + Math.min(460, window.innerWidth - 40) + "px";
+    // responsive: side-by-side on wide screens (keeps the dice big), stacked on phones
+    const wide = window.innerWidth >= 640;
+    const W = Math.min(460, window.innerWidth - 40);
+    const dieSize = wide ? 64 : Math.max(44, Math.floor((W - 44) / 5));
+
+    // die face drawn with CSS pips (the ⚀-⚅ glyphs render blank on many devices)
+    const PIP = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
+    function faceHtml(d) {
+      const set = PIP[d] || [];
+      const dot = Math.max(8, Math.round(dieSize * 0.16));
+      let h = "<div style='display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;gap:1px;padding:" + Math.round(dieSize * 0.16) + "px;box-sizing:border-box'>";
+      for (let i = 1; i <= 9; i++) {
+        h += "<div style='display:grid;place-items:center'>" + (set.indexOf(i) !== -1
+          ? "<div style='width:" + dot + "px;height:" + dot + "px;border-radius:50%;background:#173a2b'></div>" : "") + "</div>";
+      }
+      return h + "</div>";
+    }
+
     const diceRow = api.el("div", "");
-    diceRow.style.cssText = "display:flex;gap:10px";
+    diceRow.style.cssText = "display:flex;gap:8px;justify-content:center;flex-wrap:wrap";
     const dieEls = dice.map((_, i) => {
       const b = api.el("button", "");
-      b.style.cssText = "width:60px;height:60px;border-radius:14px;font-size:38px;background:#fff;border:3px solid transparent;cursor:pointer;box-shadow:var(--shadow)";
+      b.style.cssText = "width:" + dieSize + "px;height:" + dieSize + "px;border-radius:14px;padding:0;background:#fff;" +
+        "border:3px solid transparent;cursor:pointer;box-shadow:var(--shadow);box-sizing:border-box";
       b.addEventListener("click", () => { if (rolls > 0 && !over) { held[i] = !held[i]; b.style.borderColor = held[i] ? "var(--mint-600)" : "transparent"; } });
       diceRow.appendChild(b); return b;
     });
     const rollBtn = api.el("button", "btn primary");
     rollBtn.addEventListener("click", roll);
-    wrap.appendChild(diceRow); wrap.appendChild(rollBtn);
+
+    const left = api.el("div", "");
+    left.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:14px";
+    left.appendChild(diceRow); left.appendChild(rollBtn);
 
     const card = api.el("div", "");
-    card.style.cssText = "display:grid;grid-template-columns:1fr auto;gap:4px 14px;width:100%;background:#fff;padding:14px 18px;border-radius:var(--radius);box-shadow:var(--shadow)";
-    wrap.appendChild(card);
+    card.style.cssText = "display:grid;grid-template-columns:1fr auto;gap:4px 14px;background:#fff;padding:14px 18px;border-radius:var(--radius);box-shadow:var(--shadow);" +
+      (wide ? "min-width:300px" : "width:100%");
+
+    const wrap = api.el("div", "");
+    wrap.style.cssText = wide
+      ? "display:flex;gap:22px;align-items:flex-start;justify-content:center"
+      : "display:flex;flex-direction:column;align-items:center;gap:16px;width:" + W + "px";
+    wrap.appendChild(left); wrap.appendChild(card);
     api.board.appendChild(wrap);
 
-    const PIPS = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
     let over = false;
 
-    function drawDice() { dieEls.forEach((b, i) => (b.textContent = PIPS[dice[i]])); }
+    function drawDice() { dieEls.forEach((b, i) => (b.innerHTML = faceHtml(dice[i]))); }
     function totals(p) {
       let upper = 0, lower = 0;
       CATS.forEach((c) => { const v = sheets[p][c.key]; if (v == null) return; if (c.up) upper += v; else lower += v; });
