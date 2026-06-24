@@ -11,8 +11,8 @@ Arcade.register({
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: {
-    type: "time", // fastest correct solve wins; each hint adds +10s
-    categories: [ // a separate ranking per difficulty — hardest sits on top
+    type: "time", // one ranking, fastest correct solve first; each hint adds +10s
+    categories: [ // difficulty labels shown as a badge on each leaderboard row
       { key: "Hard", label: "🔴 Hard" },
       { key: "Medium", label: "🟠 Medium" },
       { key: "Easy", label: "🟢 Easy" },
@@ -24,7 +24,7 @@ Arcade.register({
     "Each row, column, and 3×3 box must contain 1–9 with no repeats — clashes flash red.",
     "✏️ Notes lets you pencil in candidates; 💡 Hint reveals one correct cell.",
     "You're on the clock — each 💡 hint adds +10s. Fastest correct solve tops the board!",
-    "Each difficulty has its own ranking — Hard sits above Medium above Easy.",
+    "Everyone is ranked together, fastest to slowest — your difficulty shows on your row.",
   ],
   options: [
     { key: "diff", label: "Difficulty", type: "select", default: "easy",

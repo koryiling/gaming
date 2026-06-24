@@ -58,17 +58,17 @@ export default {
       for (const e of events) {
         if ((e.t || 0) < cutoff) continue;
         if (cat && e.c !== cat) continue;
-        const a = agg[e.n] || (agg[e.n] = { score: 0, ts: 0, set: false });
+        const a = agg[e.n] || (agg[e.n] = { score: 0, ts: 0, c: e.c, set: false });
         if (metric === "wins") {
           a.score += (e.w || 0);
           if (e.w && (e.t || 0) > a.ts) a.ts = e.t || 0; // most recent win
         } else {
           const s = Number(e.s) || 0;
-          if (lower ? (!a.set || s < a.score) : (s > a.score || !a.set)) { a.score = s; a.ts = e.t || 0; a.set = true; }
+          if (lower ? (!a.set || s < a.score) : (s > a.score || !a.set)) { a.score = s; a.ts = e.t || 0; a.c = e.c; a.set = true; }
         }
       }
       const top = Object.keys(agg)
-        .map((n) => ({ name: n, score: agg[n].score, ts: agg[n].ts }))
+        .map((n) => ({ name: n, score: agg[n].score, ts: agg[n].ts, cat: agg[n].c }))
         .filter((r) => (metric === "wins" ? r.score > 0 : (lower ? r.score > 0 : true)))
         .sort((a, b) => (lower ? a.score - b.score : b.score - a.score))
         .slice(0, 10);
