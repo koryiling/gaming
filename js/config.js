@@ -6,5 +6,5 @@
  * Example: leaderboardUrl: "https://mint-arcade-leaderboard.yourname.workers.dev"
  */
 window.MINT_CFG = {
-  leaderboardUrl: "",
+  leaderboardUrl: "https://leaderboard.koryiling511.workers.dev",
 };
