@@ -24,6 +24,7 @@ Arcade.register({
     "Each row, column, and 3×3 box must contain 1–9 with no repeats — clashes flash red.",
     "✏️ Notes lets you pencil in candidates; 💡 Hint reveals one correct cell.",
     "You're on the clock — each 💡 hint adds +10s. Shortest solve tops the board!",
+    "Watch your accuracy: 5 wrong entries are allowed — the 6th mistake ends the game.",
     "Each difficulty has its own ranking — Hard, Medium, then Easy — shortest time first.",
   ],
   options: [
@@ -82,8 +83,9 @@ Arcade.register({
     const fixed = puzzle.map((row) => row.map((v) => v !== 0));
     const notes = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set()));
     const hinted = Array.from({ length: 9 }, () => Array(9).fill(false));
-    let sel = null, over = false, noteMode = false, hints = 0;
+    let sel = null, over = false, noteMode = false, hints = 0, mistakes = 0;
     const HINT_PENALTY = 10; // seconds added to your time per hint used
+    const MAX_MISTAKES = 5;  // 5 wrong entries allowed; the 6th ends the game
     let t0 = 0, tick = null, finalElapsed = 0;
     function elapsedSec() { return Math.max(0, Math.round((performance.now() - t0) / 1000)); }
     function fmt(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
@@ -200,8 +202,20 @@ Arcade.register({
       }
       // placing / erasing a real value
       hinted[r][c] = false;
+      const wrong = n !== 0 && n !== solution[r][c]; // entry that doesn't match the unique solution
       grid[r][c] = n;
       notes[r][c].clear();
+      if (wrong) {
+        mistakes++;
+        if (mistakes > MAX_MISTAKES) {
+          over = true;
+          if (tick) { clearInterval(tick); tick = null; }
+          render(); scoreboard();
+          api.setStatus("💥 " + MAX_MISTAKES + " mistakes used up — the 6th ended the game. Hit Restart for a new puzzle.");
+          return;
+        }
+        api.toast("❌ Wrong number (mistakes: " + mistakes + "/" + MAX_MISTAKES + ")");
+      }
       render(); checkWin();
     }
 
@@ -242,6 +256,7 @@ Arcade.register({
         { name: "Time", value: fmt(elapsed), color: "#2e9d6c" },
         { name: "Difficulty", value: api.config.options.diff, color: "#e67e22" },
         { name: "Hints", value: String(hints) + (hints ? " (+" + hints * HINT_PENALTY + "s)" : ""), color: "#3498db" },
+        { name: "Mistakes", value: Math.min(mistakes, MAX_MISTAKES) + "/" + MAX_MISTAKES, color: "#e74c3c" },
       ]);
     }
 

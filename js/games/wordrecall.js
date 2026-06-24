@@ -7,10 +7,12 @@ Arcade.register({
   tags: ["Word", "Memory", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // your best single game ranks highest → lowest (scores don't add up)
   rules: [
     "A word appears briefly, then hides.",
-    "Type exactly what you saw and press Enter.",
-    "Each correct recall scores points and the next word gets longer & flashes faster!",
+    "Type exactly what you saw and press Enter (or tap ✓ Enter).",
+    "10 words per game — each correct recall scores points and the next flashes faster.",
+    "You may miss twice; the third wrong answer ends the game.",
   ],
   options: [
     { key: "speed", label: "Flash time", type: "select", default: 1200,
@@ -20,7 +22,9 @@ Arcade.register({
   create(api) {
     const WORDS = ["mint", "garden", "river", "sunset", "dragon", "planet", "harmony", "whisper", "lantern", "blossom", "compass", "voyage", "thunder", "crystal", "meadow", "falcon", "marble", "October", "diamond", "village", "kingdom", "treasure", "midnight", "festival"];
     const flashMs = api.config.options.speed;
-    let round = 0, score = 0, answer = "", over = false, timer = null;
+    const ROUNDS = 10;      // 10 words per game
+    const MAX_WRONG = 2;    // two misses allowed; the third wrong answer ends the game
+    let round = 0, score = 0, wrong = 0, answer = "", over = false, timer = null;
 
     const wrap = api.el("div", "");
     wrap.style.cssText = "display:flex;flex-direction:column;gap:18px;align-items:center;padding:10px";
@@ -29,10 +33,27 @@ Arcade.register({
     const input = api.el("input");
     input.type = "text"; input.disabled = true;
     input.style.cssText = "padding:12px;font-size:22px;width:240px;text-align:center;border-radius:12px;border:2px solid var(--mint-300);text-transform:uppercase;outline:none";
-    const go = api.el("button", "btn primary", "Start ▶");
-    wrap.appendChild(display); wrap.appendChild(input); wrap.appendChild(go);
+    // ✓ Enter button — lets touch/mobile players submit the current word without a keyboard Enter
+    const enterBtn = api.el("button", "btn primary", "✓ Enter");
+    enterBtn.addEventListener("click", () => { input.focus(); submit(); });
+    const go = api.el("button", "btn ghost", "Start ▶");
+    wrap.appendChild(display); wrap.appendChild(input); wrap.appendChild(enterBtn); wrap.appendChild(go);
     api.board.appendChild(wrap);
 
+    function setScore() { api.setScores([
+      { name: api.config.username, value: score, color: api.colors[0] },
+      { name: "Word", value: Math.min(round, ROUNDS) + "/" + ROUNDS, color: "#3498db" },
+      { name: "Misses", value: wrong + "/" + MAX_WRONG, color: "#e74c3c" },
+    ]); }
+
+    function nextOrFinish() { if (round >= ROUNDS) finish("🎉 All " + ROUNDS + " done! Final score <b>" + score + "</b>. Hit Play again to beat it."); else flash(); }
+    function finish(msg) {
+      over = true; input.disabled = true; enterBtn.disabled = true;
+      go.textContent = "Play again ▶"; go.disabled = false;
+      if (api.submitScore) api.submitScore(score); // best single game ranks highest
+      setScore();
+      api.setStatus(msg);
+    }
     function flash() {
       round++;
       answer = WORDS[Math.random() * WORDS.length | 0].toUpperCase();
@@ -43,27 +64,35 @@ Arcade.register({
       timer = setTimeout(() => {
         display.textContent = "❓"; display.style.color = "var(--ink)";
         input.disabled = false; input.focus();
-        api.setStatus("Type what you saw and press Enter!");
+        api.setStatus("Word " + round + "/" + ROUNDS + " — type what you saw and press Enter!");
       }, ms);
-      api.setScores([{ name: api.config.username, value: score, color: api.colors[0] }]);
+      setScore();
     }
     function submit() {
       if (input.disabled || over) return;
       if ((input.value || "").trim().toUpperCase() === answer) {
         score += answer.length * 5;
+        setScore();
         api.setStatus("✅ Correct! +" + (answer.length * 5) + " — next one…");
-        api.setScores([{ name: api.config.username, value: score, color: api.colors[0] }]);
-        setTimeout(flash, 600);
+        input.disabled = true;
+        setTimeout(nextOrFinish, 600);
       } else {
-        over = true; input.disabled = true; go.textContent = "Play again ▶"; go.disabled = false;
+        wrong++;
         display.textContent = answer;
-        api.setStatus("❌ It was " + answer + ". Final score " + score + ".");
+        if (wrong > MAX_WRONG) {
+          finish("❌ It was " + answer + ". Third miss — game over. Final score <b>" + score + "</b>.");
+        } else {
+          setScore();
+          api.setStatus("❌ It was " + answer + " — miss " + wrong + "/" + MAX_WRONG + " (a third ends the game). Next…");
+          input.disabled = true;
+          setTimeout(nextOrFinish, 1000);
+        }
       }
     }
-    go.addEventListener("click", () => { if (over) { score = 0; round = 0; over = false; } go.disabled = true; flash(); });
+    go.addEventListener("click", () => { if (over) { score = 0; round = 0; wrong = 0; over = false; enterBtn.disabled = false; } go.disabled = true; flash(); });
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
 
-    api.setScores([{ name: api.config.username, value: 0, color: api.colors[0] }]);
+    setScore();
     api.setStatus("Press Start, watch the word, then type it from memory 🧠");
     return { stop() { if (timer) clearTimeout(timer); } };
   },

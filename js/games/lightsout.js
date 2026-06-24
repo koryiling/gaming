@@ -7,10 +7,12 @@ Arcade.register({
   tags: ["Puzzle", "Classic", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "wins" }, // counts how many puzzles you've solved (each solve adds one)
   rules: [
     "Click a light to toggle it and its four neighbours (up/down/left/right).",
     "Goal: turn every light OFF.",
     "Every puzzle is solvable — fewer moves means a higher score!",
+    "Each puzzle you clear counts as one success on the leaderboard — solve more to climb.",
   ],
   options: [
     { key: "size", label: "Grid", type: "select", default: 5,
@@ -57,7 +59,8 @@ Arcade.register({
       if (solved()) {
         over = true;
         const sc = Math.max(20, 400 - moves * 12);
-        api.setStatus("🎉 Lights out in " + moves + " moves! Score " + sc + ". Hit Restart for a new puzzle.");
+        if (api.recordWin) api.recordWin(api.config.username); // each solved puzzle = one success
+        api.setStatus("🎉 Lights out in " + moves + " moves! Score " + sc + " — success recorded 🏆. Hit Restart for a new puzzle.");
         api.setScores([{ name: api.config.username, value: sc, color: api.colors[0] }]);
       } else {
         api.setStatus("💡 " + moves + " moves — keep going until it's all dark.");
