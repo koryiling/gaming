@@ -629,7 +629,7 @@
     try { return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
     catch (e) { return d.toLocaleDateString(); }
   }
-  function renderRows(ol, list, metric, emptyMsg, catLabels) {
+  function renderRows(ol, list, metric, emptyMsg) {
     ol.innerHTML = "";
     if (!list.length) { ol.appendChild(el("li", "lb-empty", emptyMsg)); return; }
     list.forEach((e, i) => {
@@ -638,16 +638,12 @@
       row.appendChild(el("span", "lb-rank", medal));
       const nameWrap = el("span", "lb-name");
       nameWrap.appendChild(el("span", "lb-name-text", e.name));
-      // meta line: difficulty/category badge + when achieved
-      const meta = el("span", "lb-meta");
-      if (catLabels && e.cat && catLabels[e.cat]) meta.appendChild(el("span", "lb-cat-badge", catLabels[e.cat]));
       const when = fmtWhen(e.ts);
       if (when) {
         const w = el("span", "lb-when", "🕒 " + when);
         if (e.ts) { const full = new Date(e.ts); if (!isNaN(full.getTime())) w.title = full.toLocaleString(); }
-        meta.appendChild(w);
+        nameWrap.appendChild(w);
       }
-      if (meta.children.length) nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
       const val = metric === "wins" ? e.score + " " + (e.score === 1 ? T("win") : T("wins"))
         : metric === "time" ? fmtTime(e.score)
@@ -656,29 +652,36 @@
       ol.appendChild(row);
     });
   }
-  // build a {categoryKey: label} map from a game def, for per-row difficulty badges
-  function catLabelsFor(gameId) {
-    const def = GAMES.find((g) => g.id === gameId);
-    const cats = def && def.leaderboard && def.leaderboard.categories;
-    if (!cats || !cats.length) return null;
-    const m = {};
-    cats.forEach((c) => { m[c.key] = c.label; });
-    return m;
-  }
-  function fillLBList(ol, gameId, emptyMsg, limit) {
-    const metric = gameMetric(gameId);
-    const catLabels = catLabelsFor(gameId);
+  // fill one ranked list (optionally filtered to a category) into the given <ol>
+  function fillListInto(ol, gameId, metric, emptyMsg, limit, cat) {
     if (lbScope === "global") {
       if (!globalURL()) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalNotSetup"))); return; }
       ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("loadingGlobal")));
       const reqId = ++globalReqId; ol._req = reqId;
-      fetchGlobalTop(gameId, lbWindow, metric)
-        .then((list) => { if (ol._req === reqId) renderRows(ol, list, metric, T("noGlobal"), catLabels); })
+      fetchGlobalTop(gameId, lbWindow, metric, cat)
+        .then((list) => { if (ol._req === reqId) renderRows(ol, list, metric, T("noGlobal")); })
         .catch(() => { if (ol._req === reqId) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalErr"))); } });
       return;
     }
-    // single ranking, fastest→slowest (time metric sorts ascending in board.top)
-    renderRows(ol, board.top(gameId, lbWindow, metric, limit), metric, emptyMsg || T("noScores"), catLabels);
+    // time metric sorts ascending in board.top — shortest time first
+    renderRows(ol, board.top(gameId, lbWindow, metric, limit, cat), metric, emptyMsg || T("noScores"));
+  }
+  function fillLBList(ol, gameId, emptyMsg, limit) {
+    const metric = gameMetric(gameId);
+    const def = GAMES.find((g) => g.id === gameId);
+    const cats = def && def.leaderboard && def.leaderboard.categories;
+    if (cats && cats.length) {
+      // one labelled, separately-ranked section per category (Sudoku: Hard, Medium, Easy)
+      ol.innerHTML = "";
+      cats.forEach((c) => {
+        ol.appendChild(el("li", "lb-cat-head", c.label));
+        const sub = el("ol", "lb-cat-list");
+        ol.appendChild(sub);
+        fillListInto(sub, gameId, metric, emptyMsg, limit, c.key);
+      });
+      return;
+    }
+    fillListInto(ol, gameId, metric, emptyMsg, limit);
   }
 
   // local vs global scope (shared by modal + in-game panel)
