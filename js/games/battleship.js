@@ -1,53 +1,72 @@
-/* Battleship — 2 players, hot-seat */
+/* Battleship — 2 to 4 players, hot-seat ring duel */
 Arcade.register({
   id: "battleship",
   name: "Battleship",
   emoji: "🚢",
-  tagline: "Hide your fleet, then hunt down your rival's ships grid by grid.",
+  tagline: "Hide your fleet, then hunt down your rivals grid by grid.",
   tags: ["Board", "Strategy", "Duel"],
   minPlayers: 2,
-  maxPlayers: 2,
+  maxPlayers: 4,
+  leaderboard: { type: "wins" },
   rules: [
-    "Each captain gets a fleet on a 10×10 sea (hidden from the rival).",
-    "Tap 'Shuffle' to rearrange your ships, then 'Ready'.",
-    "Take turns firing at the enemy grid — 🔥 hit, 💧 miss.",
-    "Sink every enemy ship to win the battle!",
+    "Each captain places a fleet on their own sea (rivals, look away!).",
+    "Players fire in a ring: P1 → P2 → P3 → P4 → back to P1.",
+    "Click a square to fire — 🔥 hit, 💧 miss. A hit lets you fire again.",
+    "Sink a rival's whole fleet to knock them out. Last captain afloat wins!",
+    "Each win is tallied on the leaderboard — keep winning to climb.",
   ],
   options: [
+    { key: "board", label: "Board size", type: "select", default: "big",
+      choices: [
+        { label: "Small (8×8)", value: "small" },
+        { label: "Big (10×10)", value: "big" },
+        { label: "Huge (13×13)", value: "huge" },
+      ] },
     { key: "fleet", label: "Fleet", type: "select", default: "classic",
       choices: [{ label: "Classic (5,4,3,3,2)", value: "classic" }, { label: "Small (4,3,2)", value: "small" }] },
   ],
 
   create(api) {
-    const N = 10;
-    const SIZES = api.config.options.fleet === "small" ? [4, 3, 2] : [5, 4, 3, 3, 2];
+    const opt = api.config.options;
+    const N = opt.board === "small" ? 8 : opt.board === "huge" ? 13 : 10;
+    const SIZES = opt.fleet === "small" ? [4, 3, 2] : [5, 4, 3, 3, 2];
     const names = api.config.players;
-    const colors = [api.colors[2], api.colors[4]];
+    const P = names.length;
+    const colors = names.map((_, i) => api.colors[i % api.colors.length]);
     const cell = Math.floor(Math.min(360, window.innerWidth - 50) / N);
 
-    // board model per player
-    function makeFleet() {
-      const occ = {}, ships = [];
-      SIZES.forEach((size) => {
+    // ---- board model helpers ----
+    function emptyBoard() { return { occ: {}, ships: [], shots: {} }; }
+    function tryPlace(b, size, r, c, horiz) {
+      const cells = [];
+      for (let k = 0; k < size; k++) {
+        const rr = r + (horiz ? 0 : k), cc = c + (horiz ? k : 0);
+        if (rr < 0 || cc < 0 || rr >= N || cc >= N) return false;
+        if (b.occ[rr + "," + cc] != null) return false;
+        cells.push([rr, cc]);
+      }
+      const idx = b.ships.length;
+      cells.forEach(([rr, cc]) => (b.occ[rr + "," + cc] = idx));
+      b.ships.push({ cells, hits: 0, size });
+      return true;
+    }
+    function autoFill(b) {
+      for (let i = b.ships.length; i < SIZES.length; i++) {
+        const size = SIZES[i];
         for (;;) {
           const horiz = Math.random() < 0.5;
           const r = (Math.random() * (horiz ? N : N - size + 1)) | 0;
           const c = (Math.random() * (horiz ? N - size + 1 : N)) | 0;
-          const cells = [];
-          let ok = true;
-          for (let k = 0; k < size; k++) { const rr = r + (horiz ? 0 : k), cc = c + (horiz ? k : 0); if (occ[rr + "," + cc]) { ok = false; break; } cells.push([rr, cc]); }
-          if (!ok) continue;
-          const idx = ships.length;
-          cells.forEach(([rr, cc]) => (occ[rr + "," + cc] = idx));
-          ships.push({ cells, hits: 0, size });
-          break;
+          if (tryPlace(b, size, r, c, horiz)) break;
         }
-      });
-      return { occ, ships, shots: {} };
+      }
     }
-    const boards = [makeFleet(), makeFleet()];
+
+    const boards = names.map(() => emptyBoard());
+    const alive = names.map(() => true);
 
     let phase = "setup", setupP = 0, turn = 0, over = false;
+    let horiz = true; // current placement orientation during setup
     const grid = api.el("div", "grid-board");
     grid.style.gridTemplateColumns = "repeat(" + N + ",1fr)";
     const gate = api.el("div", "");
@@ -65,35 +84,97 @@ Arcade.register({
     }
     function showGrid() { gate.style.display = "none"; grid.style.display = "grid"; }
 
+    // next still-alive player after `from` (the attacker's target)
+    function nextAlive(from) {
+      for (let k = 1; k <= P; k++) { const i = (from + k) % P; if (alive[i]) return i; }
+      return from;
+    }
+    function aliveCount() { return alive.filter(Boolean).length; }
+
     function score() {
-      api.setScores(names.map((n, i) => {
-        const sunk = boards[i].ships.filter((s) => s.hits >= s.size).length;
-        return { name: n, value: "sunk " + sunk + "/" + boards[i].ships.length, color: colors[i], turn: phase === "play" && i === turn && !over };
-      }));
+      api.setScores(names.map((n, i) => ({
+        name: (alive[i] ? "" : "💀 ") + n,
+        value: "sunk " + boards[i].ships.filter((s) => s.hits >= s.size).length + "/" + SIZES.length,
+        color: colors[i],
+        turn: phase === "play" && i === turn && !over,
+      })));
     }
 
     // ---- setup ----
     function setupGate() {
-      showGate("🤫 " + names[setupP] + ", take the device. Place your fleet (rival, look away!).", "I'm " + names[setupP], renderSetup);
+      horiz = true;
+      showGate("🤫 " + names[setupP] + ", take the device. Place your fleet (rivals, look away!).", "I'm " + names[setupP], renderSetup);
+    }
+    function previewCells(b, size, r, c) {
+      const out = [];
+      let ok = true;
+      for (let k = 0; k < size; k++) {
+        const rr = r + (horiz ? 0 : k), cc = c + (horiz ? k : 0);
+        if (rr < 0 || cc < 0 || rr >= N || cc >= N || b.occ[rr + "," + cc] != null) ok = false;
+        out.push([rr, cc]);
+      }
+      return { cells: out, ok };
     }
     function renderSetup() {
       showGrid(); clearGrid();
       const b = boards[setupP];
+      const nextSize = b.ships.length < SIZES.length ? SIZES[b.ships.length] : null;
+      const cellEls = {};
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         const btn = api.el("div", "cell");
         btn.style.width = btn.style.height = cell + "px";
-        btn.style.cursor = "default";
+        btn.style.cursor = nextSize ? "pointer" : "default";
         const ship = b.occ[r + "," + c] != null;
         btn.style.background = ship ? colors[setupP] : "#cfeeff";
         if (ship) btn.textContent = "🚢";
         btn.style.fontSize = cell * 0.5 + "px";
+        cellEls[r + "," + c] = btn;
+        if (nextSize) {
+          btn.addEventListener("mouseenter", () => {
+            const pv = previewCells(b, nextSize, r, c);
+            pv.cells.forEach(([rr, cc]) => {
+              const e = cellEls[rr + "," + cc];
+              if (e) e.style.background = pv.ok ? "#a7e0b8" : "#f3b4ab";
+            });
+          });
+          btn.addEventListener("mouseleave", () => {
+            for (let rr = 0; rr < N; rr++) for (let cc = 0; cc < N; cc++) {
+              const e = cellEls[rr + "," + cc];
+              if (e) e.style.background = b.occ[rr + "," + cc] != null ? colors[setupP] : "#cfeeff";
+            }
+          });
+          btn.addEventListener("click", () => {
+            if (tryPlace(b, nextSize, r, c, horiz)) { renderSetup(); score(); }
+            else api.toast("Ship won't fit there 🚫");
+          });
+        }
         grid.appendChild(btn);
       }
-      api.setStatus(names[setupP] + "'s fleet — <button class='btn ghost small' id='bs-shuffle'>🔀 Shuffle</button> " +
-        "<button class='btn primary small' id='bs-ready'>✔ Ready</button>");
-      document.getElementById("bs-shuffle").addEventListener("click", () => { boards[setupP] = makeFleet(); renderSetup(); });
+
+      const placed = b.ships.length, total = SIZES.length;
+      const ready = placed === total;
+      const remaining = SIZES.slice(placed).join(", ") || "none";
+      api.setStatus(
+        names[setupP] + "'s fleet — placed <b>" + placed + "/" + total + "</b>" +
+        (ready ? "" : " · next ship: <b>" + SIZES[placed] + "</b> long · remaining: " + remaining) +
+        "<br>" +
+        "<button class='btn ghost small' id='bs-rotate'>🔄 " + (horiz ? "Horizontal" : "Vertical") + "</button> " +
+        "<button class='btn ghost small' id='bs-undo'" + (placed ? "" : " disabled") + ">↶ Undo</button> " +
+        "<button class='btn ghost small' id='bs-auto'>🔀 Auto</button> " +
+        "<button class='btn ghost small' id='bs-clear'" + (placed ? "" : " disabled") + ">🗑 Clear</button> " +
+        "<button class='btn primary small' id='bs-ready'" + (ready ? "" : " disabled") + ">✔ Ready</button>"
+      );
+      document.getElementById("bs-rotate").addEventListener("click", () => { horiz = !horiz; renderSetup(); });
+      document.getElementById("bs-undo").addEventListener("click", () => {
+        const s = b.ships.pop();
+        if (s) s.cells.forEach(([rr, cc]) => delete b.occ[rr + "," + cc]);
+        renderSetup(); score();
+      });
+      document.getElementById("bs-auto").addEventListener("click", () => { autoFill(b); renderSetup(); score(); });
+      document.getElementById("bs-clear").addEventListener("click", () => { boards[setupP] = emptyBoard(); renderSetup(); score(); });
       document.getElementById("bs-ready").addEventListener("click", () => {
-        if (setupP === 0) { setupP = 1; setupGate(); }
+        if (boards[setupP].ships.length !== SIZES.length) return;
+        if (setupP < P - 1) { setupP++; setupGate(); }
         else { phase = "play"; turn = 0; playGate(); }
         score();
       });
@@ -102,12 +183,14 @@ Arcade.register({
 
     // ---- play ----
     function playGate() {
-      showGate("🎯 " + names[turn] + "'s turn to fire. Pass the device over.", names[turn] + " fire!", renderPlay);
+      const tgt = nextAlive(turn);
+      showGate("🎯 " + names[turn] + "'s turn — fire at " + names[tgt] + "! Pass the device over.", names[turn] + " fire!", renderPlay);
       api.setStatus("");
     }
     function renderPlay() {
       showGrid(); clearGrid();
-      const enemy = boards[1 - turn];
+      const tgt = nextAlive(turn);
+      const enemy = boards[tgt];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         const key = r + "," + c;
         const btn = api.el("button", "cell");
@@ -119,29 +202,43 @@ Arcade.register({
         else { btn.style.background = "#bfe0f5"; btn.addEventListener("click", () => fire(r, c)); }
         grid.appendChild(btn);
       }
-      api.setStatus("🎯 " + names[turn] + ", tap a square to fire at " + names[1 - turn] + "'s fleet.");
+      api.setStatus("🎯 " + names[turn] + ", tap a square to fire at " + names[tgt] + "'s fleet.");
     }
     function fire(r, c) {
-      const enemy = boards[1 - turn];
+      const tgt = nextAlive(turn);
+      const enemy = boards[tgt];
       const key = r + "," + c;
       if (enemy.shots[key]) return;
       const idx = enemy.occ[key];
       if (idx != null) {
         enemy.shots[key] = "hit";
         const ship = enemy.ships[idx]; ship.hits++;
-        renderPlay(); score();
         if (ship.hits >= ship.size) {
           const allSunk = enemy.ships.every((s) => s.hits >= s.size);
-          if (allSunk) { over = true; api.setStatus("🏆 " + names[turn] + " sank the whole fleet and wins! 🎉"); score(); return; }
+          if (allSunk) {
+            alive[tgt] = false;
+            if (aliveCount() <= 1) {
+              over = true;
+              api.recordWin(names[turn]);
+              renderPlay(); score();
+              api.setStatus("🏆 " + names[turn] + " is the last captain afloat — victory! 🎉 (win recorded)");
+              return;
+            }
+            renderPlay(); score();
+            api.setStatus("💥 " + names[tgt] + " is knocked out! Fire again, " + names[turn] + " — now at " + names[nextAlive(turn)] + ".");
+            return;
+          }
+          renderPlay(); score();
           api.setStatus("💥 Hit and <b>sunk</b> a ship! Fire again, " + names[turn] + ".");
         } else {
+          renderPlay(); score();
           api.setStatus("🔥 Direct hit! Fire again, " + names[turn] + ".");
         }
       } else {
         enemy.shots[key] = "miss";
         renderPlay();
         api.setStatus("💧 Miss! Passing turn…");
-        setTimeout(() => { turn = 1 - turn; score(); playGate(); }, 900);
+        setTimeout(() => { turn = nextAlive(turn); score(); playGate(); }, 900);
       }
     }
 

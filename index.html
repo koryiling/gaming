@@ -43,7 +43,26 @@
   <!-- ===== Hub screen ===== -->
   <main class="screen hub-screen" id="hub-screen" hidden>
     <div class="hub-head">
-      <h2>Choose a game, <span id="hub-greet-name">friend</span> 👋</h2>
+      <div class="hub-title-row">
+        <div class="hub-greet">
+          <svg class="dino-mascot" viewBox="0 0 100 100" width="74" height="74" aria-hidden="true">
+            <polygon points="38,32 44,18 50,32" fill="#2e9d6c"/>
+            <polygon points="50,30 58,16 66,30" fill="#2e9d6c"/>
+            <path d="M16 70 q-11 0 -13 -11 q13 2 17 7 z" fill="#2e9d6c"/>
+            <ellipse cx="55" cy="62" rx="34" ry="28" fill="#43b884"/>
+            <circle cx="75" cy="40" r="20" fill="#43b884"/>
+            <ellipse cx="52" cy="71" rx="18" ry="15" fill="#bdeccd"/>
+            <rect x="40" y="82" width="10" height="15" rx="4" fill="#2e9d6c"/>
+            <rect x="61" y="82" width="10" height="15" rx="4" fill="#2e9d6c"/>
+            <circle cx="81" cy="36" r="6.5" fill="#fff"/>
+            <circle cx="83" cy="37" r="3.2" fill="#173a2b"/>
+            <path d="M70 49 q9 6 17 0" stroke="#173a2b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <circle cx="91" cy="41" r="1.6" fill="#173a2b"/>
+          </svg>
+          <h2>Choose a game, <span id="hub-greet-name">friend</span> 👋</h2>
+        </div>
+        <button class="btn primary" id="leaderboard-btn">🏆 Leaderboard</button>
+      </div>
       <div class="hub-controls">
         <input type="search" id="game-search" placeholder="🔍 Search games…" />
         <div class="filter-pills" id="filter-pills"></div>
@@ -89,10 +108,50 @@
           <button class="btn ghost small" id="setup-btn">⚙ Setup</button>
         </div>
       </div>
-      <div class="board-wrap" id="board"></div>
+      <div class="turn-banner" id="turn-banner" hidden></div>
+      <div class="play-main" id="play-main">
+        <div class="board-fit" id="board-fit">
+          <div class="board-wrap" id="board"></div>
+        </div>
+        <aside class="game-lb" id="game-lb">
+          <div class="game-lb-head">
+            <span class="game-lb-title" id="game-lb-title">🏆 Top 10</span>
+            <button class="btn ghost small" id="game-lb-side" title="Move panel to the other side">⇄</button>
+          </div>
+          <div class="lb-window seg" id="game-lb-window">
+            <button type="button" data-w="day">Day</button>
+            <button type="button" data-w="week">Week</button>
+            <button type="button" data-w="month">Month</button>
+            <button type="button" data-w="all">All</button>
+          </div>
+          <ol class="lb-list" id="game-lb-list"></ol>
+        </aside>
+      </div>
       <p class="status-line" id="status-line"></p>
     </div>
   </section>
+
+  <!-- ===== Leaderboard modal ===== -->
+  <div class="lb-overlay" id="lb-overlay" hidden>
+    <div class="lb-modal">
+      <div class="lb-head">
+        <h2>🏆 Leaderboard</h2>
+        <button class="btn ghost small" id="lb-close">✕ Close</button>
+      </div>
+      <div class="lb-controls">
+        <label for="lb-game">Game</label>
+        <select id="lb-game"></select>
+        <button class="btn ghost small" id="lb-clear">🗑 Clear this game</button>
+      </div>
+      <div class="lb-window seg" id="lb-window">
+        <button type="button" data-w="day">Today</button>
+        <button type="button" data-w="week">Week</button>
+        <button type="button" data-w="month">Month</button>
+        <button type="button" data-w="all">All time</button>
+      </div>
+      <ol class="lb-list" id="lb-list"></ol>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div class="toast" id="toast" hidden></div>
@@ -100,7 +159,6 @@
   <!-- Core + games -->
   <script src="js/app.js"></script>
   <script src="js/games/snake.js"></script>
-  <script src="js/games/tictactoe.js"></script>
   <script src="js/games/connectfour.js"></script>
   <script src="js/games/memory.js"></script>
   <script src="js/games/rps.js"></script>
@@ -116,11 +174,8 @@
   <script src="js/games/battleship.js"></script>
   <script src="js/games/dotsboxes.js"></script>
   <script src="js/games/yahtzee.js"></script>
-  <script src="js/games/reversi.js"></script>
-  <script src="js/games/mahjong.js"></script>
   <script src="js/games/car.js"></script>
   <script src="js/games/blackjack.js"></script>
-  <script src="js/games/mahjonghk.js"></script>
   <script src="js/games/mastermind.js"></script>
   <script src="js/games/wordmaster.js"></script>
   <script src="js/games/sudoku.js"></script>
@@ -129,6 +184,15 @@
   <script src="js/games/breakout.js"></script>
   <script src="js/games/flappy.js"></script>
   <script src="js/games/pig.js"></script>
+  <script src="js/games/numberdetective.js"></script>
+  <script src="js/games/codecrack.js"></script>
+  <script src="js/games/treasurehunt.js"></script>
+  <script src="js/games/higherlower.js"></script>
+  <script src="js/games/crazyeights.js"></script>
+  <script src="js/games/scramble.js"></script>
+  <script src="js/games/wordrecall.js"></script>
+  <script src="js/games/tugofwar.js"></script>
+  <script src="js/games/lightsout.js"></script>
   <script src="js/boot.js"></script>
 </body>
 </html>
