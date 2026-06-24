@@ -54,11 +54,11 @@ Or publish it free with **GitHub Pages**:
 | 🔐 Code Crack | 1 | bulls & cows digit deduction |
 | 🗺️ Treasure Hunt | 1 | dig for treasure with hot/cold clues |
 | 🃏 Higher or Lower | 1 | call the next card, ride your streak |
-| ⚔️ War | 2 | flip cards, highest wins the round |
+| 🃏 Crazy Eights | 2 | match suit/rank, play wild 8s, empty your hand |
 | 🔤 Word Scramble | 1 | unscramble the jumbled word |
 | 📝 Word Recall | 1 | memorise the flashed word, type it back |
-| 🎲 Dice Duel | 2–4 | take turns racing your total to the target |
-| 🎲 Dice Sprint | 1 | push your luck across rounds for the best total |
+| 💪 Tug of War | 2 | mash your key to drag the rope across the line |
+| 💡 Lights Out | 1 | toggle lights and neighbours until all go dark |
 
 > The leaderboard records high scores (and win tallies for duels like Battleship, War, Dice Duel),
 > filterable by **Today / Week / Month / All time**, shown both in a hub modal and beside each game.
