@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Board", "Strategy"],
   minPlayers: 2,
   maxPlayers: 2,
+  leaderboard: { type: "wins", reset: "year" }, // only the winner is tallied; resets each year
   rules: [
     "Players alternate dropping a disc into a column.",
     "Discs fall to the lowest empty slot in that column.",
@@ -89,6 +90,7 @@ Arcade.register({
       over = true;
       if (who != null) {
         wins[who]++;
+        api.recordWin(names[who]); // only the winner goes to the leaderboard (win tally)
         (line || []).forEach(([r, c]) => (cells[r][c].style.background = "var(--mint-300)"));
         api.setStatus("🏆 " + disc[who] + " " + names[who] + " connects four! Restart for a rematch.");
       } else {

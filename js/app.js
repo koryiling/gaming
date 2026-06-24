@@ -409,10 +409,22 @@
     launch();
   }
 
+  // some games (e.g. Connect Four) reset their leaderboard once per calendar year
+  function maybeYearlyReset(def) {
+    if (!def || !def.leaderboard || def.leaderboard.reset !== "year") return;
+    const key = "mint_yr_" + def.id;
+    const yr = String(new Date().getFullYear());
+    if (localStorage.getItem(key) !== yr) {
+      board.clear(def.id);
+      localStorage.setItem(key, yr);
+    }
+  }
+
   function launch() {
     stopGame();
     sessionScores = {};
     sessionGameId = state.current && state.current.id;
+    maybeYearlyReset(state.current);
     const boardEl = $("#board");
     boardEl.style.transform = "none";
     const api = {
