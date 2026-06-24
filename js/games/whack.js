@@ -43,7 +43,31 @@ Arcade.register({
       h.addEventListener("click", () => hit(h));
       grid.appendChild(h); holes.push(h);
     }
-    api.board.appendChild(grid);
+
+    // Play area: the 3×3 grid with a big Start button on the side. A large side button is
+    // far easier to tap than the small inline button that used to sit under the board.
+    const wrap = api.el("div", "");
+    wrap.style.cssText = "display:flex;gap:16px;align-items:center;justify-content:center";
+    const side = api.el("div", "");
+    side.style.cssText = "display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;min-width:120px";
+    const sideMsg = api.el("div", "");
+    sideMsg.style.cssText = "font-weight:800;color:var(--ink);text-align:center;font-size:14px;max-width:150px";
+    const startBtn = api.el("button", "btn primary", "▶ Start");
+    startBtn.style.cssText = "font-size:20px;padding:16px 26px;border-radius:16px";
+    let pendingStart = null;
+    startBtn.addEventListener("click", () => { const fn = pendingStart; if (fn) { pendingStart = null; fn(); } });
+    side.appendChild(sideMsg); side.appendChild(startBtn);
+    wrap.appendChild(grid); wrap.appendChild(side);
+    api.board.appendChild(wrap);
+
+    // show the side Start button with a prompt; hide it (showing whose round it is) during play
+    function showStart(msg, label, onClick) {
+      sideMsg.innerHTML = msg;
+      startBtn.textContent = label;
+      startBtn.style.display = "";
+      pendingStart = onClick;
+    }
+    function hideStart(msg) { startBtn.style.display = "none"; sideMsg.innerHTML = msg || ""; }
 
     let score = 0, timeLeft = 0, running = false, spawnT = null, tickT = null, hideT = null;
 
@@ -71,6 +95,7 @@ Arcade.register({
     }
     function startRound() {
       score = 0; timeLeft = api.config.options.time; running = true;
+      hideStart("🎮 " + names[playerIdx]);
       board();
       api.setStatus("⏱ " + timeLeft + "s · Score: <b>0</b>");
       spawn();
@@ -96,13 +121,11 @@ Arcade.register({
     }
     function promptNext() {
       board();
-      api.setStatus(
-        "🎮 " + names[playerIdx] + ", you're up! <button class='btn primary small' id='whack-go'>Start round</button>"
-      );
-      const btn = document.getElementById("whack-go");
-      if (btn) btn.addEventListener("click", () => { api.setStatus(""); startRound(); });
+      api.setStatus("🎮 " + names[playerIdx] + ", you're up — tap ▶ Start round.");
+      showStart(names[playerIdx] + ", you're up!", "▶ Start round", () => { api.setStatus(""); startRound(); });
     }
     function finish() {
+      hideStart("🏁");
       const max = Math.max(...finalScores);
       const champs = names.filter((_, i) => finalScores[i] === max);
       api.setStatus(
@@ -113,10 +136,12 @@ Arcade.register({
     }
 
     board();
-    if (names.length === 1) { api.setStatus("Get ready… <button class='btn primary small' id='whack-go'>Start!</button>"); }
-    else { api.setStatus("🎮 " + names[0] + " goes first. <button class='btn primary small' id='whack-go'>Start round</button>"); }
-    const go = document.getElementById("whack-go");
-    if (go) go.addEventListener("click", () => { api.setStatus(""); startRound(); });
+    api.setStatus("Tap ▶ Start to bonk some moles! 🐹");
+    showStart(
+      names.length === 1 ? "Get ready!" : ("🎮 " + names[0] + " goes first"),
+      names.length === 1 ? "▶ Start!" : "▶ Start round",
+      () => { api.setStatus(""); startRound(); }
+    );
 
     return { stop() { running = false; clearInterval(spawnT); clearInterval(tickT); clearTimeout(hideT); } };
   },
