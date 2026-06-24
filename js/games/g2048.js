@@ -10,7 +10,7 @@ Arcade.register({
   rules: [
     "Use Arrow keys / WASD to slide all tiles in one direction.",
     "Two tiles with the same number merge into their sum.",
-    "A new tile (2 or 4) appears after every move.",
+    "A new tile appears after every move — it gets bigger as your board grows.",
     "Reach the target tile to win — or fill the board to lose.",
   ],
   options: [
@@ -46,12 +46,26 @@ Arcade.register({
       addTile(); addTile(); draw();
       api.setStatus("Swipe, or slide with Arrow keys / WASD 🎮");
     }
+    function spawnValue() {
+      // scale spawned tiles with the board's biggest tile, so you don't grind from 2 forever
+      let maxTile = 2;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] > maxTile) maxTile = grid[r][c];
+      let cap = 4;
+      while ((cap * 2) * 32 <= maxTile) cap *= 2;       // cap ≈ maxTile / 32, minimum 4
+      const lo = Math.max(2, cap / 4);
+      const cands = [];
+      for (let v = lo; v <= cap; v *= 2) cands.push(v);  // e.g. max 256 → [2,4,8], max 1024 → [8,16,32]
+      const r = Math.random();                            // weight toward the smaller options
+      if (cands.length >= 3) return r < 0.55 ? cands[0] : r < 0.85 ? cands[1] : cands[2];
+      if (cands.length === 2) return r < 0.7 ? cands[0] : cands[1];
+      return cands[0];
+    }
     function addTile() {
       const empty = [];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!grid[r][c]) empty.push([r, c]);
       if (!empty.length) return;
       const [r, c] = empty[(Math.random() * empty.length) | 0];
-      grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+      grid[r][c] = spawnValue();
     }
     function draw() {
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {

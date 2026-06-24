@@ -57,7 +57,7 @@ window.__GAME_I18N = {
       rules: [
         "Guna kekunci Anak Panah / WASD untuk meluncurkan semua jubin ke satu arah.",
         "Dua jubin dengan nombor sama akan bergabung menjadi jumlahnya.",
-        "Jubin baharu (2 atau 4) muncul selepas setiap gerakan.",
+        "Jubin baharu muncul selepas setiap gerakan — semakin besar apabila papan anda berkembang.",
         "Capai jubin sasaran untuk menang — atau penuhkan papan dan kalah.",
       ],
     },
@@ -420,7 +420,7 @@ window.__GAME_I18N = {
       rules: [
         "用方向键 / WASD 将所有方块朝一个方向滑动。",
         "两个数字相同的方块会合并成它们的和。",
-        "每次移动后都会出现一个新方块（2 或 4）。",
+        "每次移动后都会出现一个新方块——随着局面变大，新方块也会更大。",
         "拼出目标方块即获胜——或者填满棋盘则失败。",
       ],
     },
