@@ -423,23 +423,16 @@
     const boardEl = $("#board");
     const wrap = $("#board-fit");
     if (!boardEl || !wrap || $("#play-panel").hidden || !state.instance) return;
-    // reset, measure natural size, then scale DOWN only so canvases stay crisp
+    // reset, measure natural size
     boardEl.style.transform = "none";
     wrap.style.height = "auto";
     const natW = boardEl.scrollWidth, natH = boardEl.scrollHeight;
     if (!natW || !natH) return;
     const availW = wrap.clientWidth || (window.innerWidth - 28);
-    const top = wrap.getBoundingClientRect().top;
-    // reserve room below the board so the status line (and, when the leaderboard
-    // stacks beneath the board on narrow screens, that panel too) stay on screen
-    const statusEl = $("#status-line");
-    let reserve = (statusEl ? statusEl.offsetHeight : 0) + 36;
-    const main = $("#play-main");
-    const stacked = main && getComputedStyle(main).flexDirection.indexOf("column") === 0;
-    const lb = $("#game-lb");
-    if (stacked && lb) reserve += lb.offsetHeight + 18;
-    const availH = window.innerHeight - top - reserve;
-    let s = Math.min(availW / natW, availH / natH);
+    // Only shrink to fit the WIDTH so nothing is cut off sideways. Never scale down
+    // for height — keep games at full, readable (desktop) size and let the page
+    // scroll if a board is tall, so everything stays visible.
+    let s = availW / natW;
     if (!isFinite(s) || s <= 0) s = 1;
     if (s > 1) s = 1;
     boardEl.style.transformOrigin = "top center";
