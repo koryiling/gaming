@@ -2,14 +2,15 @@
  * Mint Arcade — global leaderboard API (Cloudflare Worker + KV)
  *
  * Routes:
- *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins|time>
+ *   GET  /scores?game=<id>&window=<day|week|month|all>&metric=<score|wins|time>&cat=<optional>
  *        → { top: [ { name, score, ts }, ... up to 10 ] }
- *          ts = when the player achieved it (best-score time, or latest win)
- *   POST /scores   body: { game, name, score }  or  { game, name, win: 1 }
+ *          ts  = when the player achieved it (best-score time, or latest win)
+ *          cat = optional category filter (e.g. Sudoku difficulty)
+ *   POST /scores   body: { game, name, score, cat? }  or  { game, name, win: 1 }
  *        → { ok: true }
  *
  * Storage: one KV key per game ("game:<id>") holding a JSON array of events
- *          { n: name, t: timestamp, s?: score, w?: 1 }. Events older than
+ *          { n: name, t: timestamp, s?: score, w?: 1, c?: category }. Events older than
  *          ~90 days (or beyond the last 5000) are trimmed on write.
  *
  * Binding: a KV namespace bound as `LEADERBOARD` (see wrangler.toml).
@@ -44,6 +45,7 @@ export default {
       const win = url.searchParams.get("window") || "all";
       const m = url.searchParams.get("metric");
       const metric = m === "wins" ? "wins" : m === "time" ? "time" : "score";
+      const cat = (url.searchParams.get("cat") || "").slice(0, 24); // optional category filter
       if (!game) return json({ error: "missing game" }, 400);
 
       const raw = await kv.get("game:" + game);
@@ -55,6 +57,7 @@ export default {
       const agg = Object.create(null);
       for (const e of events) {
         if ((e.t || 0) < cutoff) continue;
+        if (cat && e.c !== cat) continue;
         const a = agg[e.n] || (agg[e.n] = { score: 0, ts: 0, set: false });
         if (metric === "wins") {
           a.score += (e.w || 0);
@@ -81,6 +84,8 @@ export default {
       if (!game || !name) return json({ error: "missing game/name" }, 400);
 
       const entry = { n: name, t: Date.now() };
+      const cat = String(body.cat || "").slice(0, 24).trim();
+      if (cat) entry.c = cat; // optional category (e.g. Sudoku difficulty)
       if (body.win) {
         entry.w = 1;
       } else {

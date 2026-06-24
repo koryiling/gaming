@@ -240,6 +240,12 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
 .lb-row.top2{background:linear-gradient(180deg,#f4f6f8,#e6eaef);border-color:#cfd6de}
 .lb-row.top3{background:linear-gradient(180deg,#fbeede,#f3dcc2);border-color:#e3c298}
 .lb-empty{color:var(--ink-soft);text-align:center;padding:24px;font-style:italic}
+/* difficulty (category) sections within a game's leaderboard */
+.lb-cat-head{list-style:none;font-weight:800;font-size:15px;color:var(--ink);
+  margin:16px 2px 8px;display:flex;align-items:center;gap:7px}
+.lb-list>.lb-cat-head:first-child{margin-top:0}
+.lb-cat-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.game-lb .lb-cat-head{font-size:13px;margin:12px 2px 6px}
 
 /* ===== Toast ===== */
 .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;

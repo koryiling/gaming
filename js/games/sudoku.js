@@ -10,13 +10,21 @@ Arcade.register({
   tags: ["Number", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
-  leaderboard: { type: "time" }, // fastest correct solve wins; each hint adds +10s
+  leaderboard: {
+    type: "time", // fastest correct solve wins; each hint adds +10s
+    categories: [ // a separate ranking per difficulty — hardest sits on top
+      { key: "Hard", label: "🔴 Hard" },
+      { key: "Medium", label: "🟠 Medium" },
+      { key: "Easy", label: "🟢 Easy" },
+    ],
+  },
   rules: [
     "Tap a cell, then tap a number (or press 1–9) to place it.",
     "Selecting a cell highlights its row, column, box and every matching number.",
     "Each row, column, and 3×3 box must contain 1–9 with no repeats — clashes flash red.",
     "✏️ Notes lets you pencil in candidates; 💡 Hint reveals one correct cell.",
-    "You're on the clock — each 💡 hint adds +10s. The fastest correct solve tops the board!",
+    "You're on the clock — each 💡 hint adds +10s. Fastest correct solve tops the board!",
+    "Each difficulty has its own ranking — Hard sits above Medium above Easy.",
   ],
   options: [
     { key: "diff", label: "Difficulty", type: "select", default: "easy",
@@ -24,7 +32,9 @@ Arcade.register({
   ],
 
   create(api) {
-    const KEEP = { easy: 42, med: 34, hard: 27 }[api.config.options.diff];
+    const DIFF = api.config.options.diff;
+    const KEEP = { easy: 42, med: 34, hard: 27 }[DIFF];
+    const CAT = { easy: "Easy", med: "Medium", hard: "Hard" }[DIFF] || "Easy"; // leaderboard category
 
     // ---- generation ----
     function emptyG() { return Array.from({ length: 9 }, () => Array(9).fill(0)); }
@@ -84,14 +94,22 @@ Arcade.register({
     const wrap = api.el("div", "");
     wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:12px;max-width:100%";
 
+    // bold 3×3 box borders, thin lines between cells inside a box, dark outer frame
+    const THIN = "1px solid #d4e2da", BOLD = "2.5px solid #173a2b";
     const boardEl = api.el("div", "");
-    boardEl.style.cssText = "display:grid;grid-template-columns:repeat(9," + size + "px);background:#173a2b;gap:1px;padding:3px;border-radius:10px";
+    boardEl.style.cssText = "display:grid;grid-template-columns:repeat(9," + size + "px);gap:0;padding:0;" +
+      "border:" + BOLD + ";border-radius:8px;overflow:hidden;background:#fcfff9;box-shadow:var(--shadow)";
     const cellEls = [];
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
       const b = api.el("button", "");
-      b.style.cssText = "width:" + size + "px;height:" + size + "px;border:none;padding:0;font-size:" + (size * 0.52) + "px;font-weight:700;cursor:pointer;" +
-        "display:grid;place-items:center;line-height:1;background:#fcfff9;color:var(--ink);transition:background .08s;" +
-        "margin-right:" + (c % 3 === 2 && c < 8 ? "2px" : "0") + ";margin-bottom:" + (r % 3 === 2 && r < 8 ? "2px" : "0");
+      // each cell draws only its top + left line: bold at a 3×3 boundary, thin otherwise.
+      // row 0 / col 0 draw nothing (the board's frame covers them) — keeps the frame even.
+      b.style.cssText = "box-sizing:border-box;width:" + size + "px;height:" + size + "px;padding:0;" +
+        "font-size:" + (size * 0.52) + "px;font-weight:700;cursor:pointer;display:grid;place-items:center;line-height:1;" +
+        "background:#fcfff9;color:var(--ink);transition:background .08s;" +
+        "border-top:" + (r === 0 ? "none" : (r % 3 === 0 ? BOLD : THIN)) + ";" +
+        "border-left:" + (c === 0 ? "none" : (c % 3 === 0 ? BOLD : THIN)) + ";" +
+        "border-right:none;border-bottom:none";
       b.addEventListener("click", () => selectCell(r, c));
       boardEl.appendChild(b); cellEls.push(b);
     }
@@ -212,7 +230,7 @@ Arcade.register({
       if (tick) { clearInterval(tick); tick = null; }
       const penalty = hints * HINT_PENALTY;
       const total = finalElapsed + penalty;
-      api.submitScore(total); // time-metric leaderboard: fastest correct solve wins
+      api.submitScore(total, { cat: CAT }); // time-metric leaderboard, ranked within its difficulty
       scoreboard();
       const penaltyMsg = hints ? " + " + penalty + "s for " + hints + " hint" + (hints === 1 ? "" : "s") + " = " + fmt(total) : "";
       api.setStatus("🎉 Solved in " + fmt(finalElapsed) + penaltyMsg + "! Nice work, " + api.config.username + ". Restart for a new puzzle.");

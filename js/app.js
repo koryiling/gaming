@@ -62,23 +62,23 @@
     // top `limit` within a time window. metric "wins" sums wins; "time" keeps each
     // player's fastest (lowest, lower-is-better); otherwise max score per player.
     // each row also carries `ts` — when the player achieved it (best value's time, or latest win).
-    top(gameId, win, metric, limit) {
+    top(gameId, win, metric, limit, cat) {
       const span = WINDOWS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
-      const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff);
+      const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff && (!cat || e.cat === cat));
       const lower = metric === "time"; // lower is better — keep the fastest
       const agg = {};
       events.forEach((e) => {
-        const a = agg[e.name] || (agg[e.name] = { score: 0, ts: 0, set: false });
+        const a = agg[e.name] || (agg[e.name] = { score: 0, ts: 0, cat: e.cat, set: false });
         if (metric === "wins") {
           a.score += (e.win || 0);
           if (e.win && (e.ts || 0) > a.ts) a.ts = e.ts || 0; // most recent win
         } else {
           const s = Number(e.score) || 0;
-          if (lower ? (!a.set || s < a.score) : (s > a.score || !a.set)) { a.score = s; a.ts = e.ts || 0; a.set = true; }
+          if (lower ? (!a.set || s < a.score) : (s > a.score || !a.set)) { a.score = s; a.ts = e.ts || 0; a.cat = e.cat; a.set = true; }
         }
       });
-      return Object.keys(agg).map((name) => ({ name, score: agg[name].score, ts: agg[name].ts }))
+      return Object.keys(agg).map((name) => ({ name, score: agg[name].score, ts: agg[name].ts, cat: agg[name].cat }))
         .filter((r) => (metric === "wins" ? r.score > 0 : (lower ? r.score > 0 : true)))
         .sort((a, b) => (lower ? a.score - b.score : b.score - a.score)).slice(0, limit || 50);
     },
@@ -125,10 +125,11 @@
   /* ---------- global leaderboard (Cloudflare Worker) ---------- */
   const globalURL = () => ((window.MINT_CFG && window.MINT_CFG.leaderboardUrl) || "").replace(/\/$/, "");
   let globalReqId = 0;
-  function fetchGlobalTop(gameId, win, metric) {
+  function fetchGlobalTop(gameId, win, metric, cat) {
     const base = globalURL();
     if (!base) return Promise.reject(new Error("not-configured"));
-    const u = base + "/scores?game=" + encodeURIComponent(gameId) + "&window=" + win + "&metric=" + metric;
+    let u = base + "/scores?game=" + encodeURIComponent(gameId) + "&window=" + win + "&metric=" + metric;
+    if (cat) u += "&cat=" + encodeURIComponent(cat);
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), 7000);
     return fetch(u, { signal: ctrl.signal })
@@ -450,7 +451,7 @@
       setStatus: (html) => ($("#status-line").innerHTML = html),
       setScores: renderScores,
       recordWin: (name) => recordWinFor(state.current && state.current.id, name),
-      submitScore: (value) => recordScoreFor(state.current && state.current.id, value),
+      submitScore: (value, meta) => recordScoreFor(state.current && state.current.id, value, meta),
       toast,
       colors: PALETTE,
       el,
@@ -568,13 +569,16 @@
     renderGameLB();
   }
 
-  // games may call api.submitScore(value) to bank a score immediately (e.g. on game over)
-  function recordScoreFor(gameId, value) {
+  // games may call api.submitScore(value, meta) to bank a score immediately (e.g. on game over).
+  // meta.cat tags the entry with a leaderboard category (e.g. Sudoku difficulty).
+  function recordScoreFor(gameId, value, meta) {
     if (!gameId || !Number.isFinite(value)) return;
     const name = state.config && state.config.username;
     if (!name) return;
-    board.log(gameId, { name: name, score: value });
-    postGlobal(gameId, { name: name, score: value });
+    const entry = { name: name, score: value };
+    if (meta && meta.cat) entry.cat = meta.cat;
+    board.log(gameId, entry);
+    postGlobal(gameId, entry);
     delete sessionScores[name]; // already banked — avoid double-logging at session end
     renderGameLB();
   }
@@ -648,18 +652,35 @@
       ol.appendChild(row);
     });
   }
-  function fillLBList(ol, gameId, emptyMsg, limit) {
-    const metric = gameMetric(gameId);
+  // fill a single (sub)list for one game/category into the given <ol>
+  function fillListInto(ol, gameId, metric, emptyMsg, limit, cat) {
     if (lbScope === "global") {
       if (!globalURL()) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalNotSetup"))); return; }
       ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("loadingGlobal")));
       const reqId = ++globalReqId; ol._req = reqId;
-      fetchGlobalTop(gameId, lbWindow, metric)
+      fetchGlobalTop(gameId, lbWindow, metric, cat)
         .then((list) => { if (ol._req === reqId) renderRows(ol, list, metric, T("noGlobal")); })
         .catch(() => { if (ol._req === reqId) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalErr"))); } });
       return;
     }
-    renderRows(ol, board.top(gameId, lbWindow, metric, limit), metric, emptyMsg || T("noScores"));
+    renderRows(ol, board.top(gameId, lbWindow, metric, limit, cat), metric, emptyMsg || T("noScores"));
+  }
+  function fillLBList(ol, gameId, emptyMsg, limit) {
+    const metric = gameMetric(gameId);
+    const def = GAMES.find((g) => g.id === gameId);
+    const cats = def && def.leaderboard && def.leaderboard.categories;
+    if (cats && cats.length) {
+      // one labelled, separately-ranked section per category (e.g. Sudoku difficulty)
+      ol.innerHTML = "";
+      cats.forEach((c) => {
+        ol.appendChild(el("li", "lb-cat-head", c.label));
+        const sub = el("ol", "lb-cat-list");
+        ol.appendChild(sub);
+        fillListInto(sub, gameId, metric, emptyMsg, limit, c.key);
+      });
+      return;
+    }
+    fillListInto(ol, gameId, metric, emptyMsg, limit);
   }
 
   // local vs global scope (shared by modal + in-game panel)
@@ -754,7 +775,7 @@
     const show = (top) => {
       banner.textContent = top
         ? (metric === "wins" ? T("recordWins", { name: top.name, n: top.score })
-          : metric === "time" ? T("recordTime", { name: top.name, time: fmtTime(top.score) })
+          : metric === "time" ? T("recordTime", { name: top.name, time: fmtTime(top.score) }) + (top.cat ? " [" + top.cat + "]" : "")
           : T("recordScore", { name: top.name, score: top.score }))
         : T("noRecord");
     };
