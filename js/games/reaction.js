@@ -7,14 +7,19 @@ Arcade.register({
   tags: ["Reflex", "Quick"],
   minPlayers: 1,
   maxPlayers: 4,
+  leaderboard: { type: "wins" },
   rules: [
     "The panel turns red — wait for it.",
+    "The green flash comes at a random speed: sometimes fast, sometimes faster.",
     "When it flashes green, click/tap as fast as possible.",
     "Tap too early and the round is void — patience matters!",
-    "Best average over several tries wins (lower is better).",
+    "Best average over your chosen number of tries wins (lower is better).",
   ],
   options: [
-    { key: "tries", label: "Tries per player", type: "range", default: 3, min: 1, max: 5, step: 1 },
+    {
+      key: "tries", label: "Tries per player", type: "select", default: 3,
+      choices: [{ value: 3, label: "3" }, { value: 5, label: "5" }, { value: 10, label: "10" }],
+    },
   ],
 
   create(api) {
@@ -41,7 +46,9 @@ Arcade.register({
     function ready() {
       phase = "ready";
       setPanel("#e74c3c", "Wait for green… 🔴");
-      const delay = 1200 + Math.random() * 2600;
+      // Randomise the speed each round — sometimes fast, sometimes faster.
+      const faster = Math.random() < 0.5;
+      const delay = faster ? (350 + Math.random() * 650) : (900 + Math.random() * 1500);
       timer = setTimeout(() => { phase = "go"; t0 = performance.now(); setPanel("#43b884", "TAP NOW! 🟢"); }, delay);
     }
     function tap() {
@@ -85,6 +92,8 @@ Arcade.register({
       const champs = names.filter((_, i) => avgs[i] === min);
       setPanel("#247a55", "Done! 🏁");
       board();
+      // record the winner(s) — the fastest average, the "greatest" — to the leaderboard
+      if (valid.length) champs.forEach((c) => api.recordWin(c));
       api.setStatus(
         names.length === 1
           ? "⚡ Your average: <b>" + avgs[0] + " ms</b>. " + verdict(avgs[0])
