@@ -174,6 +174,23 @@ Arcade.register({
       rotate(); draw(); canvas.focus();
     });
 
+    // touch controls — move / soft-drop / hard-drop buttons (rotate is the side button)
+    if (window.Touch && Touch.enabled) {
+      const bar = Touch.bar();
+      const bL = Touch.button("◀"), bR = Touch.button("▶"), bD = Touch.button("▼"), bDrop = Touch.button("⤓");
+      Touch.press(bL, () => { if (!over) { move(-1); draw(); } }, { repeat: true, interval: 120 });
+      Touch.press(bR, () => { if (!over) { move(1); draw(); } }, { repeat: true, interval: 120 });
+      Touch.press(bD, () => { if (!over) { softDrop(); draw(); } }, { repeat: true, interval: 70 });
+      Touch.press(bDrop, () => { if (!over) hardDrop(); });
+      [bL, bR, bD, bDrop].forEach((b) => bar.appendChild(b));
+      // stack the play area and the control bar vertically (the board itself is a flex row)
+      const col = api.el("div", "");
+      col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px";
+      api.board.appendChild(col);
+      col.appendChild(wrap);
+      col.appendChild(bar);
+    }
+
     reset(); draw(); canvas.focus();
     return { stop() { if (dropT) clearInterval(dropT); window.removeEventListener("keydown", onKey); } };
   },

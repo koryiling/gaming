@@ -230,6 +230,20 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes turnpulse{0%,100%{box-shadow:0 0 0 0 rgba(67,184,132,.5)}50%{box-shadow:0 0 0 7px rgba(67,184,132,0)}}
 
+/* ===== Touch / on-screen game controls ===== */
+.touch-bar{
+  display:flex;gap:10px;justify-content:center;align-items:center;
+  flex-wrap:wrap;margin-top:10px;width:100%;
+}
+.touch-btn{
+  min-width:62px;height:62px;padding:0 16px;border:none;border-radius:16px;
+  background:var(--mint-300);color:var(--ink);font-size:26px;font-weight:800;
+  line-height:1;cursor:pointer;box-shadow:var(--shadow);
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  touch-action:none;
+}
+.touch-btn:active{background:var(--mint-400);transform:translateY(1px)}
+
 /* ===== Responsive ===== */
 @media (max-width:720px){
   .setup-grid{grid-template-columns:1fr}

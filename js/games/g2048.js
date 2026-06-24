@@ -44,7 +44,7 @@ Arcade.register({
       grid = Array.from({ length: N }, () => Array(N).fill(0));
       score = 0; over = false; won = false;
       addTile(); addTile(); draw();
-      api.setStatus("Slide with Arrow keys or WASD 🎮");
+      api.setStatus("Swipe, or slide with Arrow keys / WASD 🎮");
     }
     function addTile() {
       const empty = [];
@@ -100,6 +100,9 @@ Arcade.register({
       if (keys[k]) { e.preventDefault(); move(keys[k]); }
     }
     window.addEventListener("keydown", onKey);
+
+    // touch: swipe in any direction to slide
+    if (window.Touch) Touch.swipe(board, { onSwipe: move });
 
     reset();
     return { stop() { window.removeEventListener("keydown", onKey); } };

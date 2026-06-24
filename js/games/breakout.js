@@ -88,6 +88,17 @@ Arcade.register({
     window.addEventListener("keydown", kd); window.addEventListener("keyup", ku);
     canvas.addEventListener("mousemove", mm); canvas.addEventListener("click", mc);
 
+    // touch: drag to move the paddle, tap to launch / restart
+    function tmove(e) {
+      const t = e.touches[0]; if (!t) return;
+      const rect = canvas.getBoundingClientRect();
+      paddle.x = Math.max(0, Math.min(W - paddle.w, (t.clientX - rect.left) * (W / rect.width) - paddle.w / 2));
+      if (e.cancelable) e.preventDefault();
+    }
+    canvas.style.touchAction = "none";
+    canvas.addEventListener("touchstart", (e) => { tmove(e); mc(); }, { passive: false });
+    canvas.addEventListener("touchmove", tmove, { passive: false });
+
     reset(); canvas.focus(); raf = requestAnimationFrame(step);
     return { stop() { cancelAnimationFrame(raf); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); } };
   },

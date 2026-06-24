@@ -102,8 +102,23 @@ Arcade.register({
     window.addEventListener("keydown", kd);
     window.addEventListener("keyup", ku);
 
+    // touch: drag on the left half to move the left paddle, right half for the right paddle
+    function touchMove(e) {
+      const rect = canvas.getBoundingClientRect();
+      for (const t of e.touches) {
+        const y = (t.clientY - rect.top) * (H / rect.height);
+        const py = Math.max(0, Math.min(H - PH, y - PH / 2));
+        if ((t.clientX - rect.left) < rect.width / 2) left.y = py;
+        else if (!vsAI) right.y = py;
+      }
+      if (e.cancelable) e.preventDefault();
+    }
+    canvas.style.touchAction = "none";
+    canvas.addEventListener("touchstart", touchMove, { passive: false });
+    canvas.addEventListener("touchmove", touchMove, { passive: false });
+
     board(); draw();
-    api.setStatus(vsAI ? "W/S to move your paddle. Good luck!" : names[0] + ": W/S · " + names[1] + ": ↑/↓");
+    api.setStatus(vsAI ? "Drag (or W/S) to move your paddle. Good luck!" : names[0] + ": W/S or drag left · " + names[1] + ": ↑/↓ or drag right");
     const timer = setInterval(step, 1000 / 60);
     return { stop() { clearInterval(timer); window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); } };
   },

@@ -123,6 +123,24 @@ Arcade.register({
     window.addEventListener("keydown", kd);
     window.addEventListener("keyup", ku);
 
+    // touch: tap to restart after a crash; hold on-screen buttons to steer / change speed
+    if (window.Touch) Touch.swipe(canvas, { onTap() { if (!alive) reset(); } });
+    if (window.Touch && Touch.enabled) {
+      const bar = Touch.bar();
+      const bL = Touch.button("◀"), bR = Touch.button("▶"), bUp = Touch.button("⏫"), bDn = Touch.button("⏬");
+      Touch.hold(bL, () => (keys.left = true), () => (keys.left = false));
+      Touch.hold(bR, () => (keys.right = true), () => (keys.right = false));
+      Touch.hold(bUp, () => (keys.up = true), () => (keys.up = false));
+      Touch.hold(bDn, () => (keys.down = true), () => (keys.down = false));
+      [bL, bR, bUp, bDn].forEach((b) => bar.appendChild(b));
+      // stack the canvas and the control bar vertically (the board itself is a flex row)
+      const col = api.el("div", "");
+      col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px";
+      api.board.appendChild(col);
+      col.appendChild(canvas);
+      col.appendChild(bar);
+    }
+
     reset(); draw(); canvas.focus();
     let last = 0, raf;
     function loop(ts) { const dt = Math.min(40, ts - last || 16); last = ts; step(dt); raf = requestAnimationFrame(loop); }

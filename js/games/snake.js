@@ -42,7 +42,7 @@ Arcade.register({
       dir = { x: 1, y: 0 }; nextDir = dir;
       score = 0; alive = true;
       placeFood();
-      api.setStatus("Use Arrow keys / WASD to move 🎮");
+      api.setStatus("Swipe, or use Arrow keys / WASD to move 🎮");
       updateScore();
     }
     function placeFood() {
@@ -116,6 +116,13 @@ Arcade.register({
       nextDir = nd;
     }
     window.addEventListener("keydown", onKey);
+
+    // touch: swipe to steer, tap to restart when dead
+    const SWIPE = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+    if (window.Touch) Touch.swipe(canvas, {
+      onSwipe(d) { const nd = SWIPE[d]; if (!nd) return; if (nd.x === -dir.x && nd.y === -dir.y) return; nextDir = nd; },
+      onTap() { if (!alive) { reset(); draw(); } },
+    });
 
     reset(); draw();
     canvas.focus();
