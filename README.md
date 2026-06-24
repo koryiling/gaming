@@ -35,7 +35,7 @@ Or publish it free with **GitHub Pages**:
 | 🏓 Pong | 1–2 | W/S vs ↑/↓, or vs computer |
 | 💣 Minesweeper | 1 | easy / medium / hard fields |
 | 🔤 Hangman | 1–4 | animals / fruits / countries / mixed |
-| 🎲 Snakes & Ladders | 2–4 | dice race, climb ladders / dodge snakes |
+| 🎲 Snakes & Ladders | 1–4 | dice race, climb ladders / dodge snakes — solo vs computer or hot-seat |
 | 🧱 Tetris | 1 | rotate & drop, clear lines, levels up |
 | 🚢 Battleship | 2–4 | place fleet, ring-fire to sink rivals; last afloat wins |
 | ⬜ Dots & Boxes | 2–4 | close boxes to claim them |

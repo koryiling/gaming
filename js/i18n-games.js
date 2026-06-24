@@ -113,12 +113,13 @@ window.__GAME_I18N = {
     },
     snl: {
       name: "Ular & Tangga",
-      tagline: "Lontar dadu, panjat tangga, elak ular. Pertama ke 100 menang!",
+      tagline: "Lontar dadu, panjat tangga, elak ular — berlumba ke 100 seorang lawan komputer atau bersama rakan!",
       rules: [
         "Pada giliran anda, lontar dadu dan bergerak ke hadapan sebanyak itu.",
         "Mendarat di tangga 🪜 → panjat naik. Mendarat di ular 🐍 → gelongsor turun.",
         "Anda mesti mendarat tepat di 100 — terlebih dan anda melantun semula.",
         "Pemain pertama mencapai petak 100 memenangi perlumbaan!",
+        "Pilih 1 pemain untuk lawan 🤖 komputer, atau 2–4 pemain untuk main bergilir.",
       ],
     },
     tetris: {
@@ -475,12 +476,13 @@ window.__GAME_I18N = {
     },
     snl: {
       name: "蛇梯棋",
-      tagline: "掷骰子、爬梯子、躲开蛇。率先到达 100 者获胜！",
+      tagline: "掷骰子、爬梯子、躲开蛇——单人对战电脑或与好友一起冲向 100！",
       rules: [
         "轮到你时，掷骰子并向前移动相应的格数。",
         "落在梯子 🪜 上 → 向上爬。落在蛇 🐍 上 → 向下滑。",
         "你必须恰好落在 100 上——超出则会反弹回来。",
         "率先到达第 100 格的玩家赢得这场比赛！",
+        "选择 1 名玩家对战 🤖 电脑，或 2–4 名玩家轮流游玩。",
       ],
     },
     tetris: {
