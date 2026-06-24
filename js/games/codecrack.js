@@ -11,11 +11,13 @@ Arcade.register({
   tags: ["Detective", "Number", "Classic", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "low" }, // fewer guesses to crack the code ranks higher
   rules: [
     "A secret code of distinct digits is hidden (no repeats).",
     "Tap the keypad (or type) to enter a guess, then Crack.",
     "🟨 yellow = right digit, right place · 🟩 green = right digit, wrong place · ⬜ grey = not in the code.",
     "Past guesses move to the history panel on the left. Crack it within 10 guesses!",
+    "The fewer guesses you need to crack the code, the higher you place on the leaderboard.",
   ],
   options: [
     { key: "len", label: "Code length", type: "select", default: 4,
@@ -123,10 +125,9 @@ Arcade.register({
       cur = ""; renderCur(); score();
       if (bulls === LEN) {
         over = true;
-        const sc = Math.max(10, 200 - (tries - 1) * 18);
-        api.setStatus("🎉 Code <b>" + secret + "</b> cracked in " + tries + "! Score " + sc + ". Restart for a new code.");
-        api.setScores([{ name: api.config.username, value: sc, color: api.colors[0] }]);
-        if (api.submitScore) api.submitScore(sc);
+        api.setStatus("🎉 Code <b>" + secret + "</b> cracked in " + tries + " " + (tries === 1 ? "guess" : "guesses") + "! Fewer guesses ranks higher. Restart for a new code.");
+        api.setScores([{ name: api.config.username, value: tries + "/" + ROWS, color: api.colors[0] }]);
+        if (api.submitScore) api.submitScore(tries); // fewer guesses ranks higher (lower-is-better leaderboard)
       } else if (tries >= ROWS) {
         over = true;
         api.setStatus("💥 Out of guesses! The code was <b>" + secret + "</b>. Hit Restart.");
