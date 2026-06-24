@@ -350,6 +350,17 @@ window.__GAME_I18N = {
         "Setiap teka-teki boleh diselesaikan — lebih sedikit gerakan bermakna skor lebih tinggi!",
       ],
     },
+    idiom: {
+      name: "Simpulan Bahasa Cina",
+      tagline: "Teka simpulan bahasa Cina (chéngyǔ) daripada petunjuk emoji.",
+      rules: [
+        "Petunjuk emoji memberi isyarat tentang simpulan bahasa Cina 4 aksara (chéngyǔ).",
+        "Pilih simpulan bahasa yang sepadan daripada pilihan — anda ada 3 percubaan.",
+        "Selepas tekaan salah, tekan 💡 Petunjuk untuk mendedahkan pinyin & maksudnya (sekali setiap satu).",
+        "Lebih sedikit tekaan dan tanpa petunjuk = lebih banyak mata.",
+        "Selesaikan semua pusingan untuk tamat dengan skor terbaik anda!",
+      ],
+    },
   },
   zh: {
     snake: {
@@ -699,6 +710,17 @@ window.__GAME_I18N = {
         "点击一盏灯，翻转它和它的四个相邻灯（上/下/左/右）。",
         "目标：把每一盏灯都关掉。",
         "每个谜题都有解——步数越少得分越高！",
+      ],
+    },
+    idiom: {
+      name: "看图猜成语",
+      tagline: "根据表情符号线索猜出中文成语。",
+      rules: [
+        "表情符号线索暗示一个四字成语。",
+        "从选项中选出对应的成语——你有 3 次机会。",
+        "猜错后，点击 💡 提示可显示拼音和释义（每题一次）。",
+        "猜的次数越少、不用提示，得分越高。",
+        "完成所有回合，争取最高分！",
       ],
     },
   }
