@@ -205,10 +205,11 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
 .lb-controls select{padding:10px 14px;border-radius:var(--radius-sm);border:2px solid var(--mint-200);
   font-size:15px;font-family:inherit;background:#fff;color:var(--ink);outline:none;cursor:pointer;flex:1;min-width:160px}
 .lb-controls select:focus{border-color:var(--mint-500)}
+.lb-scope{margin-bottom:12px}
 .lb-window{margin-bottom:16px}
 .lb-window button{font-size:13px}
-.game-lb .lb-window{margin-bottom:14px;gap:4px}
-.game-lb .lb-window button{min-width:0;padding:7px 4px;font-size:12px}
+.game-lb .lb-scope,.game-lb .lb-window{margin-bottom:10px;gap:4px}
+.game-lb .lb-scope button,.game-lb .lb-window button{min-width:0;padding:7px 4px;font-size:12px}
 .lb-list{list-style:none;display:flex;flex-direction:column;gap:8px}
 .lb-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--radius-sm);
   background:var(--mint-50);border:1.5px solid var(--mint-100)}

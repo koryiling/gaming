@@ -67,6 +67,30 @@
   // best numeric score per real player during the current game session
   let sessionScores = {}, sessionGameId = null;
   let lbWindow = localStorage.getItem("mint_lb_window") || "all";
+  let lbScope = localStorage.getItem("mint_lb_scope") || "local";
+
+  /* ---------- global leaderboard (Cloudflare Worker) ---------- */
+  const globalURL = () => ((window.MINT_CFG && window.MINT_CFG.leaderboardUrl) || "").replace(/\/$/, "");
+  let globalReqId = 0;
+  function fetchGlobalTop(gameId, win, metric) {
+    const base = globalURL();
+    if (!base) return Promise.reject(new Error("not-configured"));
+    const u = base + "/scores?game=" + encodeURIComponent(gameId) + "&window=" + win + "&metric=" + metric;
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 7000);
+    return fetch(u, { signal: ctrl.signal })
+      .then((r) => { clearTimeout(to); if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then((d) => d.top || []);
+  }
+  function postGlobal(gameId, entry) {
+    const base = globalURL();
+    if (!base || !gameId) return;
+    fetch(base + "/scores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ game: gameId }, entry)),
+    }).catch(() => {});
+  }
 
   /* ---------- screen switching ---------- */
   function show(screen) {
@@ -451,7 +475,7 @@
     if (sessionGameId && gameMetric(sessionGameId) !== "wins") {
       Object.keys(sessionScores).forEach((name) => {
         const v = sessionScores[name];
-        if (Number.isFinite(v)) board.log(sessionGameId, { name: name, score: v });
+        if (Number.isFinite(v)) { board.log(sessionGameId, { name: name, score: v }); postGlobal(sessionGameId, { name: name, score: v }); }
       });
     }
     sessionScores = {};
@@ -462,6 +486,7 @@
   function recordWinFor(gameId, name) {
     if (!gameId || !name) return;
     board.log(gameId, { name: name, win: 1 });
+    postGlobal(gameId, { name: name, win: 1 });
     renderGameLB();
   }
 
@@ -486,14 +511,9 @@
   }
 
   /* ---------- leaderboard rendering ---------- */
-  function fillLBList(ol, gameId, emptyMsg) {
-    const metric = gameMetric(gameId);
-    const list = board.top(gameId, lbWindow, metric);
+  function renderRows(ol, list, metric, emptyMsg) {
     ol.innerHTML = "";
-    if (!list.length) {
-      ol.appendChild(el("li", "lb-empty", emptyMsg || "No scores yet 🌱"));
-      return;
-    }
+    if (!list.length) { ol.appendChild(el("li", "lb-empty", emptyMsg)); return; }
     list.forEach((e, i) => {
       const row = el("li", "lb-row" + (i < 3 ? " top" + (i + 1) : ""));
       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1);
@@ -503,6 +523,36 @@
       row.appendChild(el("span", "lb-score", val));
       ol.appendChild(row);
     });
+  }
+  function fillLBList(ol, gameId, emptyMsg) {
+    const metric = gameMetric(gameId);
+    if (lbScope === "global") {
+      if (!globalURL()) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", "🌍 Global board isn't set up yet.")); return; }
+      ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", "Loading global scores… ⏳"));
+      const reqId = ++globalReqId; ol._req = reqId;
+      fetchGlobalTop(gameId, lbWindow, metric)
+        .then((list) => { if (ol._req === reqId) renderRows(ol, list, metric, "No global scores yet — be the first! 🌍"); })
+        .catch(() => { if (ol._req === reqId) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", "⚠ Couldn't reach the global board.")); } });
+      return;
+    }
+    renderRows(ol, board.top(gameId, lbWindow, metric), metric, emptyMsg || "No scores yet 🌱");
+  }
+
+  // local vs global scope (shared by modal + in-game panel)
+  function setLBScope(s) {
+    lbScope = s;
+    localStorage.setItem("mint_lb_scope", s);
+    ["#lb-scope", "#game-lb-scope"].forEach((sel) => {
+      const c = $(sel);
+      if (c) [...c.children].forEach((b) => b.classList.toggle("active", b.dataset.scope === s));
+    });
+    $("#lb-clear").style.display = s === "global" ? "none" : "";
+    if (!$("#lb-overlay").hidden) renderLeaderboard();
+    renderGameLB();
+  }
+  function wireScopeSeg(sel) {
+    const c = $(sel);
+    if (c) [...c.children].forEach((b) => b.addEventListener("click", () => setLBScope(b.dataset.scope)));
   }
 
   // time-window filter (shared by modal + in-game panel)
@@ -573,7 +623,10 @@
     });
     wireWindowSeg("#lb-window");
     wireWindowSeg("#game-lb-window");
+    wireScopeSeg("#lb-scope");
+    wireScopeSeg("#game-lb-scope");
     setLBWindow(lbWindow);
+    setLBScope(lbScope);
     applyLBSide();
   }
 
