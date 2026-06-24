@@ -179,9 +179,14 @@ body{
 .game-lb .lb-row .lb-score{font-size:16px}
 @media (max-width:760px){
   .play-main,.play-main.lb-left{flex-direction:column;align-items:stretch}
-  /* hide the side leaderboard on small screens so the game board can use the full
-     width and stay fully visible — it's still reachable via the 🏆 top-bar button */
-  .game-lb{display:none}
+  /* on phones the leaderboard stacks full-width below the board so nothing is
+     hidden — every game's Top 10 (and its history) stays visible on small screens */
+  .game-lb{width:100%;flex:none}
+  /* the ⇄ side-toggle only reorders a side panel, which doesn't apply when stacked */
+  #game-lb-side{display:none}
+  .game-lb .lb-window button,.game-lb .lb-scope button{font-size:13px;padding:8px 6px}
+  .game-lb .lb-row .lb-rank{width:34px;font-size:17px}
+  .game-lb .lb-row .lb-score{font-size:17px}
 }
 .status-line{text-align:center;margin-top:16px;font-size:17px;font-weight:600;min-height:24px;color:var(--mint-700)}
 
