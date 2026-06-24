@@ -173,7 +173,11 @@ body{
 .game-lb{flex:none;width:236px;border:2px solid var(--mint-300);border-radius:var(--radius);
   background:#fff;box-shadow:var(--shadow);padding:16px 18px}
 .game-lb-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.game-lb-head-btns{display:flex;gap:6px;flex:none}
 .game-lb-title{font-weight:800;font-size:15px;color:var(--ink)}
+/* leaderboard show/hide controls exist only on phones; on desktop the panel is always shown */
+.lb-mobile-only{display:none}
+#lb-toggle.active{background:var(--mint-500);color:#fff;border-color:var(--mint-500)}
 .game-lb .lb-row{padding:8px 10px;gap:10px}
 .game-lb .lb-row .lb-rank{width:30px;font-size:16px}
 .game-lb .lb-row .lb-score{font-size:16px}
@@ -184,6 +188,9 @@ body{
   .game-lb{width:100%;flex:none}
   /* the ⇄ side-toggle only reorders a side panel, which doesn't apply when stacked */
   #game-lb-side{display:none}
+  /* on phones the player can hide the leaderboard to give the board the full width */
+  .lb-mobile-only{display:inline-flex;align-items:center}
+  .play-main.lb-hidden .game-lb{display:none}
   .game-lb .lb-window button,.game-lb .lb-scope button{font-size:13px;padding:8px 6px}
   .game-lb .lb-row .lb-rank{width:34px;font-size:17px}
   .game-lb .lb-row .lb-score{font-size:17px}

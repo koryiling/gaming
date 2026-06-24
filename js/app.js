@@ -757,6 +757,15 @@
   function applyLBSide() {
     $("#play-main").classList.toggle("lb-left", localStorage.getItem(SIDE_KEY) === "left");
   }
+  // per-session show/hide of the in-game leaderboard (phones only — the CSS .lb-hidden rule and
+  // the toggle button are scoped to the mobile breakpoint, so desktop always shows the panel).
+  // Not persisted: a reload resets to shown.
+  let lbHidden = false;
+  function applyLBHidden() {
+    $("#play-main").classList.toggle("lb-hidden", lbHidden);
+    const t = $("#lb-toggle");
+    if (t) { t.classList.toggle("active", !lbHidden); t.setAttribute("aria-pressed", String(!lbHidden)); }
+  }
   function renderGameLB() {
     const def = state.current;
     if (!def) return;
@@ -818,6 +827,8 @@
       applyLBSide();
       scheduleFit();
     });
+    $("#lb-toggle").addEventListener("click", () => { lbHidden = !lbHidden; applyLBHidden(); scheduleFit(); });
+    $("#game-lb-hide").addEventListener("click", () => { lbHidden = true; applyLBHidden(); scheduleFit(); });
     wireWindowSeg("#lb-window");
     wireWindowSeg("#game-lb-window");
     wireScopeSeg("#lb-scope");
@@ -825,6 +836,7 @@
     setLBWindow(lbWindow);
     setLBScope(lbScope);
     applyLBSide();
+    applyLBHidden();
   }
 
   /* ---------- language ---------- */

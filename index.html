@@ -106,6 +106,7 @@
       <div class="play-bar">
         <div class="scoreboard" id="scoreboard"></div>
         <div class="play-actions">
+          <button class="btn ghost small lb-mobile-only" id="lb-toggle" aria-pressed="true" data-i18n="lbRanks">🏆 Ranks</button>
           <button class="btn ghost small" id="restart-btn" data-i18n="restart">↻ Restart</button>
           <button class="btn ghost small" id="setup-btn" data-i18n="setupBtn">⚙ Setup</button>
         </div>
@@ -119,7 +120,10 @@
         <aside class="game-lb" id="game-lb">
           <div class="game-lb-head">
             <span class="game-lb-title" id="game-lb-title">🏆 Top 10</span>
-            <button class="btn ghost small" id="game-lb-side" title="Move panel to the other side">⇄</button>
+            <span class="game-lb-head-btns">
+              <button class="btn ghost small" id="game-lb-side" title="Move panel to the other side">⇄</button>
+              <button class="btn ghost small lb-mobile-only" id="game-lb-hide" title="Hide leaderboard">✕</button>
+            </span>
           </div>
           <div class="lb-scope seg" id="game-lb-scope">
             <button type="button" data-scope="local">📱</button>
