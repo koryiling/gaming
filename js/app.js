@@ -59,8 +59,8 @@
       if (list.length > 1000) d[gameId] = list.slice(-1000);
       this.save(d);
     },
-    // top 10 within a time window; metric "wins" sums wins, otherwise max score per player
-    top(gameId, win, metric) {
+    // top `limit` within a time window; metric "wins" sums wins, otherwise max score per player
+    top(gameId, win, metric, limit) {
       const span = WINDOWS[win] || Infinity;
       const cutoff = span === Infinity ? 0 : Date.now() - span;
       const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff);
@@ -71,7 +71,28 @@
       });
       return Object.keys(agg).map((name) => ({ name, score: agg[name] }))
         .filter((r) => (metric === "wins" ? r.score > 0 : true))
-        .sort((a, b) => b.score - a.score).slice(0, 10);
+        .sort((a, b) => b.score - a.score).slice(0, limit || 50);
+    },
+    // overall ranking: each player's best-per-game value averaged across all games played
+    overall(win, limit) {
+      const span = WINDOWS[win] || Infinity;
+      const cutoff = span === Infinity ? 0 : Date.now() - span;
+      const all = this.all();
+      const sums = {};
+      Object.keys(all).forEach((gameId) => {
+        const metric = gameMetric(gameId);
+        const best = {};
+        (all[gameId] || []).filter((e) => (e.ts || 0) >= cutoff).forEach((e) => {
+          if (metric === "wins") best[e.name] = (best[e.name] || 0) + (e.win || 0);
+          else { const s = Number(e.score) || 0; if (!(e.name in best) || s > best[e.name]) best[e.name] = s; }
+        });
+        Object.keys(best).forEach((name) => {
+          const ps = sums[name] || (sums[name] = { sum: 0, count: 0 });
+          ps.sum += best[name]; ps.count++;
+        });
+      });
+      return Object.keys(sums).map((name) => ({ name, score: Math.round(sums[name].sum / sums[name].count), games: sums[name].count }))
+        .sort((a, b) => b.score - a.score).slice(0, limit || 50);
     },
     clear(gameId) { const d = this.all(); delete d[gameId]; this.save(d); },
   };
@@ -551,7 +572,7 @@
       ol.appendChild(row);
     });
   }
-  function fillLBList(ol, gameId, emptyMsg) {
+  function fillLBList(ol, gameId, emptyMsg, limit) {
     const metric = gameMetric(gameId);
     if (lbScope === "global") {
       if (!globalURL()) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalNotSetup"))); return; }
@@ -562,7 +583,7 @@
         .catch(() => { if (ol._req === reqId) { ol.innerHTML = ""; ol.appendChild(el("li", "lb-empty", T("globalErr"))); } });
       return;
     }
-    renderRows(ol, board.top(gameId, lbWindow, metric), metric, emptyMsg || T("noScores"));
+    renderRows(ol, board.top(gameId, lbWindow, metric, limit), metric, emptyMsg || T("noScores"));
   }
 
   // local vs global scope (shared by modal + in-game panel)
@@ -573,7 +594,7 @@
       const c = $(sel);
       if (c) [...c.children].forEach((b) => b.classList.toggle("active", b.dataset.scope === s));
     });
-    $("#lb-clear").style.display = s === "global" ? "none" : "";
+    $("#lb-clear").style.display = (s === "global" || lbGameSel === OVERALL) ? "none" : "";
     if (!$("#lb-overlay").hidden) renderLeaderboard();
     renderGameLB();
   }
@@ -598,8 +619,38 @@
     if (c) [...c.children].forEach((b) => b.addEventListener("click", () => setLBWindow(b.dataset.w)));
   }
 
+  // leaderboard modal: which game is selected (a game id, or OVERALL for the all-games average)
+  const OVERALL = "__overall__";
+  let lbGameSel = null;
+
   function renderLeaderboard() {
-    fillLBList($("#lb-list"), $("#lb-game").value, T("setRecord"));
+    const ol = $("#lb-list");
+    if (lbGameSel === OVERALL) {
+      // average across all games — computed from local data (top 50)
+      renderRows(ol, board.overall(lbWindow, 50), "score", T("noScores"));
+      return;
+    }
+    fillLBList(ol, lbGameSel, T("setRecord"), 50);
+  }
+
+  function buildLBPills() {
+    const wrap = $("#lb-game-pills");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    const ov = el("button", "lb-game-pill" + (lbGameSel === OVERALL ? " active" : ""), "🌐 " + T("overallAvg"));
+    ov.addEventListener("click", () => selectLBGame(OVERALL));
+    wrap.appendChild(ov);
+    GAMES.forEach((g) => {
+      const b = el("button", "lb-game-pill" + (lbGameSel === g.id ? " active" : ""), g.emoji + " " + gameText(g).name);
+      b.addEventListener("click", () => selectLBGame(g.id));
+      wrap.appendChild(b);
+    });
+  }
+  function selectLBGame(id) {
+    lbGameSel = id;
+    buildLBPills();
+    $("#lb-clear").style.display = (id === OVERALL || lbScope === "global") ? "none" : "";
+    renderLeaderboard();
   }
 
   // in-game side panel — shows the current game's top 10
@@ -611,26 +662,14 @@
     const def = state.current;
     if (!def) return;
     $("#game-lb-title").textContent = T("top10", { name: gameText(def).name });
-    fillLBList($("#game-lb-list"), def.id, T("beFirst"));
+    fillLBList($("#game-lb-list"), def.id, T("beFirst"), 10);
     applyLBSide();
   }
 
-  function repopulateLBGames() {
-    const sel = $("#lb-game");
-    const cur = sel.value;
-    sel.innerHTML = "";
-    GAMES.forEach((g) => {
-      const o = document.createElement("option");
-      o.value = g.id;
-      o.textContent = g.emoji + " " + gameText(g).name;
-      sel.appendChild(o);
-    });
-    if (cur && GAMES.some((g) => g.id === cur)) sel.value = cur;
-    else if (state.current) sel.value = state.current.id;
-  }
-
   function openLeaderboard() {
-    repopulateLBGames();
+    if (lbGameSel == null) lbGameSel = state.current ? state.current.id : (GAMES[0] && GAMES[0].id);
+    buildLBPills();
+    $("#lb-clear").style.display = (lbGameSel === OVERALL || lbScope === "global") ? "none" : "";
     renderLeaderboard();
     $("#lb-overlay").hidden = false;
   }
@@ -638,10 +677,9 @@
   function initLeaderboard() {
     $("#leaderboard-btn").addEventListener("click", openLeaderboard);
     $("#lb-close").addEventListener("click", () => ($("#lb-overlay").hidden = true));
-    $("#lb-game").addEventListener("change", renderLeaderboard);
     $("#lb-clear").addEventListener("click", () => {
-      const gameId = $("#lb-game").value;
-      board.clear(gameId);
+      if (lbGameSel === OVERALL) return;
+      board.clear(lbGameSel);
       renderLeaderboard();
       toast(T("scoresCleared"));
     });
@@ -678,7 +716,7 @@
       gt.rules.forEach((r) => ul.appendChild(el("li", "", r)));
     }
     if (state.current) renderGameLB();
-    if (!$("#lb-overlay").hidden) { repopulateLBGames(); renderLeaderboard(); }
+    if (!$("#lb-overlay").hidden) { buildLBPills(); renderLeaderboard(); }
   }
 
   function initLang() {

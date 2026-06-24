@@ -202,14 +202,19 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
   width:min(620px,96vw);padding:26px 26px 30px;animation:rise .25s ease both}
 .lb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .lb-head h2{font-size:25px}
-.lb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.lb-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .lb-controls label{font-weight:700;font-size:14px}
-.lb-controls select{padding:10px 14px;border-radius:var(--radius-sm);border:2px solid var(--mint-200);
-  font-size:15px;font-family:inherit;background:#fff;color:var(--ink);outline:none;cursor:pointer;flex:1;min-width:160px}
-.lb-controls select:focus{border-color:var(--mint-500)}
+/* game picker: a row of buttons (pick one to see its board) */
+.lb-game-pills{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-height:152px;overflow-y:auto;padding:2px}
+.lb-game-pill{border:1.5px solid var(--mint-300);background:#fff;color:var(--ink);border-radius:999px;
+  padding:7px 12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap}
+.lb-game-pill:hover{border-color:var(--mint-500)}
+.lb-game-pill.active{background:linear-gradient(180deg,var(--mint-500),var(--mint-600));color:#fff;border-color:transparent}
 .lb-scope{margin-bottom:12px}
 .lb-window{margin-bottom:16px}
 .lb-window button{font-size:13px}
+/* let the (up to 50) ranked rows scroll inside the modal */
+.lb-modal .lb-list{max-height:50vh;overflow-y:auto;padding-right:4px}
 .game-lb .lb-scope,.game-lb .lb-window{margin-bottom:10px;gap:4px}
 .game-lb .lb-scope button,.game-lb .lb-window button{min-width:0;padding:7px 4px;font-size:12px}
 .lb-list{list-style:none;display:flex;flex-direction:column;gap:8px}
