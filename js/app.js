@@ -676,6 +676,30 @@
     $("#game-lb-title").textContent = T("top10", { name: gameText(def).name });
     fillLBList($("#game-lb-list"), def.id, T("beFirst"), 10);
     applyLBSide();
+    renderRecord(def);
+  }
+
+  // "record to beat" banner — shows the all-time #1 (and who holds it) for the current game,
+  // on every device, to give players a target to challenge
+  let recordReq = 0;
+  function renderRecord(def) {
+    const banner = $("#record-banner");
+    if (!banner || !def) return;
+    banner.hidden = false;
+    const metric = gameMetric(def.id);
+    const show = (top) => {
+      banner.textContent = top
+        ? (metric === "wins" ? T("recordWins", { name: top.name, n: top.score }) : T("recordScore", { name: top.name, score: top.score }))
+        : T("noRecord");
+    };
+    if (lbScope === "global" && globalURL()) {
+      const reqId = ++recordReq; banner._req = reqId;
+      fetchGlobalTop(def.id, "all", metric)
+        .then((list) => { if (banner._req === reqId) show(list[0]); })
+        .catch(() => { if (banner._req === reqId) show(board.top(def.id, "all", metric, 1)[0]); });
+    } else {
+      show(board.top(def.id, "all", metric, 1)[0]);
+    }
   }
 
   function openLeaderboard() {

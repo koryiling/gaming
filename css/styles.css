@@ -148,6 +148,11 @@ body{
 .score-chip .sc-val{color:var(--mint-700)}
 .play-actions{display:flex;gap:8px}
 
+/* record-to-beat banner (shown for every game, on all devices) */
+.record-banner{display:block;width:fit-content;max-width:100%;margin:0 auto 14px;padding:8px 18px;
+  border-radius:999px;background:linear-gradient(180deg,#fff7da,#ffeeb0);border:2px solid #f3d24e;
+  color:#7a5b00;font-weight:800;font-size:14px;text-align:center;box-shadow:var(--shadow)}
+
 /* whose-turn banner (shown for turn-based games) */
 .turn-banner{display:flex;align-items:center;justify-content:center;gap:11px;
   width:fit-content;max-width:100%;margin:0 auto 16px;padding:11px 26px;border-radius:999px;
