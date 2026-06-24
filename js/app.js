@@ -452,6 +452,7 @@
       setScores: renderScores,
       recordWin: (name) => recordWinFor(state.current && state.current.id, name),
       submitScore: (value, meta) => recordScoreFor(state.current && state.current.id, value, meta),
+      celebrate: (msg) => celebrate(msg),
       toast,
       colors: PALETTE,
       el,
@@ -561,11 +562,79 @@
     sessionGameId = null;
   }
 
+  // ---------- winner celebration: confetti ribbons + fanfare + banner ----------
+  let _audioCtx = null;
+  function playFanfare() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      _audioCtx = _audioCtx || new AC();
+      const ac = _audioCtx;
+      if (ac.state === "suspended") ac.resume();
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => { // C5 E5 G5 C6
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = "triangle"; o.frequency.value = f;
+        const t = ac.currentTime + i * 0.12;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.25, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+        o.connect(g); g.connect(ac.destination);
+        o.start(t); o.stop(t + 0.24);
+      });
+    } catch (e) {}
+  }
+  function confettiBurst() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cv = document.createElement("canvas");
+    cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999";
+    cv.width = window.innerWidth; cv.height = window.innerHeight;
+    document.body.appendChild(cv);
+    const cx = cv.getContext("2d");
+    const colors = ["#f1c40f", "#e74c3c", "#43b884", "#3498db", "#9b59b6", "#e67e22", "#2e9d6c"];
+    const parts = [];
+    for (let i = 0; i < 150; i++) parts.push({
+      x: cv.width / 2 + (Math.random() - 0.5) * 140, y: cv.height * 0.32 + (Math.random() - 0.5) * 60,
+      vx: (Math.random() - 0.5) * 12, vy: Math.random() * -13 - 4,
+      w: 6 + Math.random() * 7, h: 9 + Math.random() * 11,
+      rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4, col: colors[(Math.random() * colors.length) | 0],
+    });
+    let frame = 0;
+    (function tick() {
+      frame++;
+      cx.clearRect(0, 0, cv.width, cv.height);
+      parts.forEach((p) => {
+        p.vy += 0.32; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.rot += p.vr;
+        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
+        cx.globalAlpha = Math.max(0, 1 - frame / 135); cx.fillStyle = p.col;
+        cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+      });
+      if (frame < 135) requestAnimationFrame(tick); else cv.remove();
+    })();
+  }
+  let _celebrateAt = 0;
+  function celebrate(message) {
+    const now = (window.performance && performance.now) ? performance.now() : 0;
+    if (now && now - _celebrateAt < 800) return; // de-dupe rapid double-calls
+    _celebrateAt = now;
+    confettiBurst();
+    playFanfare();
+    const banner = document.createElement("div");
+    banner.textContent = message || "🏆 You win!";
+    banner.style.cssText = "position:fixed;top:24%;left:50%;transform:translate(-50%,-50%) scale(.7);" +
+      "z-index:10000;background:rgba(23,58,43,.93);color:#fff;font-weight:800;font-size:25px;" +
+      "padding:16px 28px;border-radius:18px;box-shadow:0 16px 44px rgba(0,0,0,.3);pointer-events:none;opacity:0;" +
+      "transition:opacity .25s ease,transform .25s ease;text-align:center;max-width:90vw";
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => { banner.style.opacity = "1"; banner.style.transform = "translate(-50%,-50%) scale(1)"; });
+    setTimeout(() => { banner.style.opacity = "0"; setTimeout(() => banner.remove(), 320); }, 1900);
+  }
+
   // games call api.recordWin(name) when someone wins (win-metric leaderboards)
   function recordWinFor(gameId, name) {
     if (!gameId || !name) return;
     board.log(gameId, { name: name, win: 1 });
     postGlobal(gameId, { name: name, win: 1 });
+    celebrate("🏆 " + name + " wins!");
     renderGameLB();
   }
 

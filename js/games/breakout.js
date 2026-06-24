@@ -69,6 +69,7 @@ Arcade.register({
           won = true; alive = false;
           const secs = Math.max(1, Math.round((performance.now() - startT) / 1000));
           if (api.submitScore) api.submitScore(secs); // fastest clear ranks highest (lower is better)
+          if (api.celebrate) api.celebrate("🎉 Cleared in " + secs + "s!");
           api.setStatus("🎉 Cleared every brick in " + secs + "s with " + score + " pts! Fastest time tops the board 🏆. Restart to replay.");
         }
         if (ball.y > H) {

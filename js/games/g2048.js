@@ -100,7 +100,7 @@ Arcade.register({
       else { g = g.map((r) => slide(r.reverse()).reverse()); }
       grid = g;
       if (JSON.stringify(grid) !== before) { addTile(); draw(); }
-      if (won) { over = true; api.setStatus("🎉 You reached " + goal + "! Keep going via Restart."); return; }
+      if (won) { over = true; if (api.celebrate) api.celebrate("🎉 You reached " + goal + "!"); api.setStatus("🎉 You reached " + goal + "! Keep going via Restart."); return; }
       if (!canMove()) {
         over = true;
         if (api.submitScore) api.submitScore(score); // bank the final score to the leaderboard

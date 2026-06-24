@@ -45,6 +45,7 @@ Arcade.register({
       if (v === secret) {
         over = true;
         if (api.submitScore) api.submitScore(tries); // fewest guesses ranks highest (lower is better)
+        if (api.celebrate) api.celebrate("🎉 Cracked in " + tries + (tries === 1 ? " try" : " tries") + "!");
         api.setStatus("🎉 Cracked it in " + tries + (tries === 1 ? " try" : " tries") + "! The number was <b>" + secret + "</b>. Fewer guesses ranks higher 🏆. Hit Restart for a new case.");
         api.setScores([{ name: api.config.username, value: tries + (tries === 1 ? " try" : " tries"), color: api.colors[0] }]);
         return;

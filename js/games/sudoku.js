@@ -245,6 +245,7 @@ Arcade.register({
       const penalty = hints * HINT_PENALTY;
       const total = finalElapsed + penalty;
       api.submitScore(total, { cat: CAT }); // time-metric leaderboard, ranked within its difficulty
+      if (api.celebrate) api.celebrate("🎉 Solved in " + fmt(total) + "!");
       scoreboard();
       const penaltyMsg = hints ? " + " + penalty + "s for " + hints + " hint" + (hints === 1 ? "" : "s") + " = " + fmt(total) : "";
       api.setStatus("🎉 Solved in " + fmt(finalElapsed) + penaltyMsg + "! Nice work, " + api.config.username + ". Restart for a new puzzle.");

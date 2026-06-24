@@ -130,6 +130,7 @@ Arcade.register({
         api.setStatus("🎉 Code <b>" + secret + "</b> cracked in " + tries + " " + (tries === 1 ? "guess" : "guesses") + "! Fewer guesses ranks higher. Restart for a new code.");
         api.setScores([{ name: api.config.username, value: tries + "/" + ROWS, color: api.colors[0] }]);
         if (api.submitScore) api.submitScore(tries); // fewer guesses ranks higher (lower-is-better leaderboard)
+        if (api.celebrate) api.celebrate("🎉 Cracked in " + tries + "!");
       } else if (tries >= ROWS) {
         over = true;
         api.setStatus("💥 Out of guesses! The code was <b>" + secret + "</b>. Hit Restart.");

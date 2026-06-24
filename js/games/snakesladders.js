@@ -7,9 +7,10 @@ Arcade.register({
   tags: ["Board", "Family"],
   minPlayers: 1,
   maxPlayers: 4,
+  leaderboard: { type: "wins" }, // counts wins; each victory adds one (computer wins aren't recorded)
   rules: [
     "On your turn, roll the dice and move forward that many squares.",
-    "Land on a ladder 🪜 → climb up. Land on a snake 🐍 → slide down.",
+    "Land on a ladder 🪜 → climb up (the square shows where to). Land on a snake 🐍 → slide down.",
     "You must land exactly on 100 — overshoot and you bounce back.",
     "First player to reach square 100 wins the race!",
     "Pick 1 player to face a 🤖 computer, or 2–4 players for hot-seat.",
@@ -75,7 +76,8 @@ Arcade.register({
     // board 10x10
     const size = Math.floor(Math.min(440, window.innerWidth - 40) / 10);
     const grid = api.el("div", "grid-board");
-    grid.style.cssText = "display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:6px";
+    grid.style.cssText = "display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:8px;" +
+      "background:#fff6d8;border:3px solid #f3d24e;border-radius:var(--radius);box-shadow:var(--shadow)"; // sunny yellow board
     const cellOf = {};
     for (let vr = 0; vr < 10; vr++) {
       const r = 9 - vr; // bottom row r=0
@@ -87,15 +89,20 @@ Arcade.register({
         cell.style.cssText = "width:" + size + "px;height:" + size + "px;border-radius:7px;position:relative;" +
           "font-size:10px;color:var(--ink-soft);display:flex;align-items:flex-start;justify-content:flex-start;padding:2px;" +
           "background:" + ((r + col) % 2 ? "#d7f0e2" : "#eafaf0");
-        if (LADDERS[n]) cell.style.background = "#cdeede";
-        if (SNAKES[n]) cell.style.background = "#f6dcd6";
+        if (LADDERS[n]) cell.style.background = "#ffe79e"; // ladders pop in gold
+        if (SNAKES[n]) cell.style.background = "#f6c9c0";
         const num = api.el("span", "", String(n));
         cell.appendChild(num);
+        const dest = LADDERS[n] || SNAKES[n];
         const mark = LADDERS[n] ? "🪜" : SNAKES[n] ? "🐍" : "";
         if (mark) {
+          // show the destination so it's clear where you go up/down to
           const m = api.el("span", "", mark);
           m.style.cssText = "position:absolute;right:2px;bottom:1px;font-size:" + (size * 0.42) + "px";
           cell.appendChild(m);
+          const arrow = api.el("span", "", (LADDERS[n] ? "↑" : "↓") + dest);
+          arrow.style.cssText = "position:absolute;left:2px;bottom:1px;font-size:" + Math.max(9, size * 0.28) + "px;font-weight:800;color:" + (LADDERS[n] ? "#a06a00" : "#b23b2a") + ";line-height:1";
+          cell.appendChild(arrow);
         }
         const tokens = api.el("div", "");
         tokens.style.cssText = "position:absolute;inset:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:1px";
@@ -105,8 +112,40 @@ Arcade.register({
         cellOf[n] = cell;
       }
     }
+    // player badges placed around the board: P1 top-left, P2 top-right, P3 bottom-left, P4 bottom-right
+    const badgeVal = [];
+    function makeBadge(i) {
+      const b = api.el("div", "");
+      b.style.cssText = "display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:#fff;" +
+        "box-shadow:var(--shadow);font-weight:700;font-size:13px;border:2px solid transparent";
+      const dot = api.el("span", ""); dot.style.cssText = "width:12px;height:12px;border-radius:50%;flex:none;background:" + api.colors[i];
+      const nm = api.el("span", "", names[i]);
+      const v = api.el("span", ""); v.style.cssText = "color:var(--ink-soft);font-weight:800";
+      b.appendChild(dot); b.appendChild(nm); b.appendChild(v);
+      badgeVal[i] = v;
+      return b;
+    }
+    const badges = names.map((_, i) => makeBadge(i));
+    const rowCss = "display:flex;justify-content:space-between;align-items:center;width:100%;max-width:" + (size * 10 + 24) + "px;margin:2px 0";
+    const topRow = api.el("div", ""); topRow.style.cssText = rowCss;
+    topRow.appendChild(badges[0]); topRow.appendChild(badges[1] || api.el("span", ""));
+    wrap.appendChild(topRow);
     wrap.appendChild(grid);
+    if (badges[2] || badges[3]) {
+      const bottomRow = api.el("div", ""); bottomRow.style.cssText = rowCss;
+      bottomRow.appendChild(badges[2] || api.el("span", "")); bottomRow.appendChild(badges[3] || api.el("span", ""));
+      wrap.appendChild(bottomRow);
+    }
     api.board.appendChild(wrap);
+    function renderBadges() {
+      badges.forEach((b, i) => {
+        if (!b) return;
+        badgeVal[i].textContent = pos[i] ? " #" + pos[i] : " start";
+        const active = i === turn && !over;
+        b.style.borderColor = active ? api.colors[i] : "transparent";
+        b.style.background = active ? "#fffbea" : "#fff";
+      });
+    }
 
     function token(i) {
       const t = api.el("div", "");
@@ -121,6 +160,7 @@ Arcade.register({
     }
     function board() {
       api.setScores(names.map((n, i) => ({ name: n, value: pos[i] || "start", color: api.colors[i], turn: i === turn && !over })));
+      renderBadges();
     }
 
     function roll() {
@@ -146,6 +186,7 @@ Arcade.register({
       drawTokens(); board();
       if (pos[turn] === 100) {
         over = true; rolling = false; rollBtn.disabled = true;
+        if (api.recordWin && !(vsAI && turn === 1)) api.recordWin(names[turn]);
         api.setStatus("🏆 " + names[turn] + " reached 100 and wins! 🎉 Hit Restart to race again.");
         return;
       }

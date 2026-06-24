@@ -7,12 +7,13 @@ Arcade.register({
   tags: ["Word", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "low" }, // fastest correct solve (seconds) ranks highest; per game, not summed
   rules: [
-    "Guess the secret word. Type a word and press Enter.",
+    "Guess the secret word — type on your own keyboard or tap the on-screen keys, then Enter.",
     "🟨 Yellow = correct letter in the correct spot.",
     "🟩 Green = letter is in the word, but a different spot.",
     "⬜ Grey = letter is not in the word. Crack it within 10 guesses!",
-    "Past guesses and their results are listed in the History panel on the right.",
+    "Past guesses and results are listed in the History panel on the left — solve it fast to top the board!",
   ],
   options: [
     { key: "len", label: "Word length", type: "select", default: 5,
@@ -33,6 +34,7 @@ Arcade.register({
     const pool = WORDS[LEN].filter((w) => w.length === LEN);
     const answer = pool[(Math.random() * pool.length) | 0].toUpperCase();
     let row = 0, col = 0, over = false;
+    const t0 = performance.now(); // for the fastest-solve leaderboard
     const grid = [];
 
     // outer: play column (board + keyboard) on the left, history panel on the right
@@ -42,12 +44,13 @@ Arcade.register({
     outer.style.cssText = "display:flex;gap:14px;align-items:flex-start;justify-content:center;flex-wrap:nowrap";
     const wrap = api.el("div", "");
     wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:14px";
-    // 10 guesses laid out in two columns of 5 (left = tries 1–5, right = 6–10)
-    const HALF = Math.ceil(ROWS / 2);
+    // two columns of 5 on wide screens; a single column on phones so the whole board stays clear
+    const NCOLS = window.innerWidth >= 560 ? 2 : 1;
+    const HALF = Math.ceil(ROWS / NCOLS);
     const boardEl = api.el("div", "");
     boardEl.style.cssText = "display:flex;gap:16px;align-items:flex-start;justify-content:center";
-    const cols = [api.el("div", ""), api.el("div", "")];
-    cols.forEach((cw) => (cw.style.cssText = "display:grid;grid-template-rows:repeat(" + HALF + ",1fr);gap:6px"));
+    const cols = [];
+    for (let i = 0; i < NCOLS; i++) { const cw = api.el("div", ""); cw.style.cssText = "display:grid;grid-template-rows:repeat(" + HALF + ",1fr);gap:6px"; cols.push(cw); }
     const cellSize = Math.min(44, Math.floor((Math.min(360, window.innerWidth - 40)) / LEN) - 6);
     for (let r = 0; r < ROWS; r++) {
       const rowEl = api.el("div", "");
@@ -59,11 +62,21 @@ Arcade.register({
           "display:grid;place-items:center;font-size:" + (cellSize * 0.5) + "px;font-weight:800;color:var(--ink);text-transform:uppercase";
         rowEl.appendChild(cell); grid[r][c] = cell;
       }
-      cols[r < HALF ? 0 : 1].appendChild(rowEl);
+      cols[Math.min(NCOLS - 1, Math.floor(r / HALF))].appendChild(rowEl);
     }
-    boardEl.appendChild(cols[0]);
-    boardEl.appendChild(cols[1]);
+    cols.forEach((cw) => boardEl.appendChild(cw));
     wrap.appendChild(boardEl);
+
+    // hidden input so phone players can type on their own device keyboard
+    const hidden = document.createElement("input");
+    hidden.type = "text"; hidden.autocomplete = "off"; hidden.setAttribute("autocapitalize", "characters"); hidden.setAttribute("aria-hidden", "true");
+    hidden.style.cssText = "position:absolute;left:-9999px;opacity:0;height:1px;width:1px";
+    hidden.addEventListener("input", () => { hidden.value.toUpperCase().split("").forEach((ch) => { if (/[A-Z]/.test(ch)) handle(ch); }); hidden.value = ""; });
+    hidden.addEventListener("keydown", (e) => { if (e.key === "Enter") { handle("ENTER"); e.preventDefault(); } else if (e.key === "Backspace") handle("DEL"); });
+    const kbHint = api.el("button", "btn ghost", "⌨️ Use my keyboard");
+    kbHint.style.cssText += ";font-size:13px;padding:7px 12px";
+    kbHint.addEventListener("click", () => hidden.focus());
+    wrap.appendChild(hidden); wrap.appendChild(kbHint);
 
     // on-screen keyboard
     const KB = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
@@ -153,12 +166,20 @@ Arcade.register({
           if (!cur || rank[res[i]] > rank[cur]) { k.dataset.state = res[i]; k.style.background = COL[res[i]]; k.style.color = FG[res[i]]; } }
       });
       addHistory(g, res, row + 1);
-      if (g === answer) { over = true; api.setStatus("🎉 Got it — <b>" + answer + "</b>! Solved in " + (row + 1) + ". Restart for a new word."); board(); return; }
+      if (g === answer) {
+        over = true;
+        const secs = Math.max(1, Math.round((performance.now() - t0) / 1000));
+        if (api.submitScore) api.submitScore(secs); // fastest correct solve ranks highest (lower is better)
+        if (api.celebrate) api.celebrate("🎉 Solved in " + secs + "s!");
+        api.setStatus("🎉 Got it — <b>" + answer + "</b> in " + (row + 1) + " tries, " + secs + "s! Faster ranks higher. Restart for a new word.");
+        board(); return;
+      }
       row++; col = 0; board();
       if (row >= ROWS) { over = true; api.setStatus("💥 Out of guesses! The word was <b>" + answer + "</b>. Hit Restart."); }
       else api.setStatus("Keep going — " + (ROWS - row) + " guesses left.");
     }
     function onKey(e) {
+      if (document.activeElement === hidden) return; // the hidden input handles its own keys
       const k = e.key;
       if (k === "Enter") handle("ENTER");
       else if (k === "Backspace") handle("DEL");

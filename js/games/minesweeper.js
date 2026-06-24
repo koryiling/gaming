@@ -7,11 +7,12 @@ Arcade.register({
   tags: ["Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "wins" }, // counts cleared fields; each win adds one
   rules: [
     "Click a tile to reveal it. Numbers show how many mines touch that tile.",
-    "Right-click (or long-press) to flag a suspected mine 🚩.",
+    "Tap 🚩 Flag to switch to flag mode (then tap a tile to flag it) — or right-click / long-press.",
     "Reveal a mine and it's game over!",
-    "Clear every safe tile to win.",
+    "Clear every safe tile to win — each clear counts on the leaderboard.",
   ],
   options: [
     {
@@ -27,7 +28,7 @@ Arcade.register({
   create(api) {
     const CONF = { easy: [9, 10], med: [12, 24], hard: [14, 40] }[api.config.options.diff];
     const N = CONF[0], MINES = CONF[1];
-    let grid, revealed, flagged, over, win, started, flags = 0;
+    let grid, revealed, flagged, over, win, started, flags = 0, flagMode = false;
 
     const size = Math.floor(Math.min(440, window.innerWidth - 40) / N) - 4;
     const board = api.el("div", "grid-board");
@@ -40,11 +41,25 @@ Arcade.register({
       b.style.fontSize = size * 0.5 + "px";
       b.style.background = "var(--mint-300)";
       const idx = i;
-      b.addEventListener("click", () => reveal(idx));
+      b.addEventListener("click", () => { if (flagMode) flag(idx); else reveal(idx); });
       b.addEventListener("contextmenu", (e) => { e.preventDefault(); flag(idx); });
       board.appendChild(b); cells.push(b);
     }
     api.board.appendChild(board);
+
+    // in-game controls: a flag-mode toggle (handy on touch) and a fresh-board button
+    const tools = api.el("div", "");
+    tools.style.cssText = "display:flex;gap:8px;justify-content:center;margin-top:10px";
+    const flagBtn = api.el("button", "btn ghost", "🚩 Flag: Off");
+    flagBtn.addEventListener("click", () => {
+      flagMode = !flagMode;
+      flagBtn.className = "btn " + (flagMode ? "primary" : "ghost");
+      flagBtn.textContent = "🚩 Flag: " + (flagMode ? "On" : "Off");
+    });
+    const newBtn = api.el("button", "btn ghost", "🔄 New field");
+    newBtn.addEventListener("click", () => { flagMode = false; flagBtn.className = "btn ghost"; flagBtn.textContent = "🚩 Flag: Off"; init(); });
+    tools.appendChild(flagBtn); tools.appendChild(newBtn);
+    api.board.appendChild(tools);
 
     function init() {
       grid = Array(N * N).fill(0);
@@ -121,7 +136,8 @@ Arcade.register({
       const safe = N * N - MINES;
       if (revealed.filter(Boolean).length === safe) {
         over = win = true;
-        api.setStatus("🎉 Cleared! You swept the field, " + api.config.username + "!");
+        if (api.recordWin) api.recordWin(api.config.username);
+        api.setStatus("🎉 Cleared! You swept the field, " + api.config.username + "! 🏆 (win recorded)");
       }
     }
 

@@ -56,6 +56,7 @@ Arcade.register({
         over = true;
         btn.textContent = "💎";
         if (api.submitScore) api.submitScore(digs); // fewest digs ranks highest (lower is better)
+        if (api.celebrate) api.celebrate("🎉 Found it in " + digs + " digs!");
         api.setStatus("🎉 Treasure found in " + digs + " digs! Fewer digs ranks higher 🏆. Restart to bury a new one.");
         api.setScores([{ name: api.config.username, value: digs + " digs", color: api.colors[0] }]);
         return;
