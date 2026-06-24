@@ -29,6 +29,45 @@
     clear: () => localStorage.removeItem("mint_user"),
   };
 
+  /* ---------- leaderboard (timestamped event log per game) ---------- */
+  const LB_KEY = "mint_leaderboard";
+  const WINDOWS = { day: 864e5, week: 6048e5, month: 2592e6, all: Infinity };
+  const board = {
+    all() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || {}; } catch (e) { return {}; } },
+    save(d) { localStorage.setItem(LB_KEY, JSON.stringify(d)); },
+    // append an event: { name, score } for score games, or { name, win:1 } for win games
+    log(gameId, entry) {
+      const d = this.all();
+      const list = d[gameId] || (d[gameId] = []);
+      entry.ts = Date.now();
+      list.push(entry);
+      if (list.length > 1000) d[gameId] = list.slice(-1000);
+      this.save(d);
+    },
+    // top 10 within a time window; metric "wins" sums wins, otherwise max score per player
+    top(gameId, win, metric) {
+      const span = WINDOWS[win] || Infinity;
+      const cutoff = span === Infinity ? 0 : Date.now() - span;
+      const events = (this.all()[gameId] || []).filter((e) => (e.ts || 0) >= cutoff);
+      const agg = {};
+      events.forEach((e) => {
+        if (metric === "wins") agg[e.name] = (agg[e.name] || 0) + (e.win || 0);
+        else { const s = Number(e.score) || 0; if (!(e.name in agg) || s > agg[e.name]) agg[e.name] = s; }
+      });
+      return Object.keys(agg).map((name) => ({ name, score: agg[name] }))
+        .filter((r) => (metric === "wins" ? r.score > 0 : true))
+        .sort((a, b) => b.score - a.score).slice(0, 10);
+    },
+    clear(gameId) { const d = this.all(); delete d[gameId]; this.save(d); },
+  };
+  function gameMetric(gameId) {
+    const g = GAMES.find((x) => x.id === gameId);
+    return (g && g.leaderboard && g.leaderboard.type) || "score";
+  }
+  // best numeric score per real player during the current game session
+  let sessionScores = {}, sessionGameId = null;
+  let lbWindow = localStorage.getItem("mint_lb_window") || "all";
+
   /* ---------- screen switching ---------- */
   function show(screen) {
     ["login-screen", "hub-screen", "game-screen"].forEach((id) => {
@@ -292,6 +331,8 @@
     $("#setup-panel").hidden = true;
     $("#play-panel").hidden = false;
     $("#board").innerHTML = "";
+    $("#board").style.transform = "none";
+    $("#turn-banner").hidden = true;
     $("#scoreboard").innerHTML = "";
     $("#status-line").textContent = "";
     launch();
@@ -299,12 +340,16 @@
 
   function launch() {
     stopGame();
-    const board = $("#board");
+    sessionScores = {};
+    sessionGameId = state.current && state.current.id;
+    const boardEl = $("#board");
+    boardEl.style.transform = "none";
     const api = {
-      board,
+      board: boardEl,
       config: state.config,
       setStatus: (html) => ($("#status-line").innerHTML = html),
       setScores: renderScores,
+      recordWin: (name) => recordWinFor(state.current && state.current.id, name),
       toast,
       colors: PALETTE,
       el,
@@ -314,6 +359,45 @@
     } catch (err) {
       console.error(err);
       $("#status-line").textContent = "⚠ Something went wrong loading this game.";
+    }
+    // refresh the in-game leaderboard panel for this game
+    renderGameLB();
+    // size the freshly-rendered board to fit the window (now + after late layout)
+    scheduleFit();
+    setTimeout(scheduleFit, 150);
+  }
+
+  /* ---------- auto-fit board to any desktop size ---------- */
+  let fitObserver = null, fitScheduled = false;
+  function fitBoard() {
+    const boardEl = $("#board");
+    const wrap = $("#board-fit");
+    if (!boardEl || !wrap || $("#play-panel").hidden || !state.instance) return;
+    // reset, measure natural size, then scale DOWN only so canvases stay crisp
+    boardEl.style.transform = "none";
+    wrap.style.height = "auto";
+    const natW = boardEl.scrollWidth, natH = boardEl.scrollHeight;
+    if (!natW || !natH) return;
+    const availW = wrap.clientWidth || (window.innerWidth - 28);
+    const top = wrap.getBoundingClientRect().top;
+    const availH = window.innerHeight - top - 26;
+    let s = Math.min(availW / natW, availH / natH);
+    if (!isFinite(s) || s <= 0) s = 1;
+    if (s > 1) s = 1;
+    boardEl.style.transformOrigin = "top center";
+    boardEl.style.transform = "scale(" + s + ")";
+    wrap.style.height = natH * s + "px";
+  }
+  function scheduleFit() {
+    if (fitScheduled) return;
+    fitScheduled = true;
+    requestAnimationFrame(() => { fitScheduled = false; fitBoard(); });
+  }
+  function initAutoFit() {
+    window.addEventListener("resize", scheduleFit);
+    if (window.ResizeObserver) {
+      fitObserver = new ResizeObserver(scheduleFit);
+      fitObserver.observe($("#board"));
     }
   }
 
@@ -331,7 +415,28 @@
       chip.appendChild(el("span", "", it.name + " "));
       if (it.value != null) chip.appendChild(el("span", "sc-val", String(it.value)));
       sb.appendChild(chip);
+      // capture numeric scores for real players only (skip stat chips like "Lines"/"Level")
+      const num = Number(it.value);
+      const players = (state.config && state.config.players) || [];
+      if (Number.isFinite(num) && players.indexOf(it.name) !== -1) {
+        if (!(it.name in sessionScores) || num > sessionScores[it.name]) sessionScores[it.name] = num;
+      }
     });
+    // "whose turn" banner — driven by whichever score item is flagged turn:true
+    const banner = $("#turn-banner");
+    const active = items.find((it) => it.turn);
+    if (active) {
+      banner.innerHTML = "";
+      if (active.color) {
+        const d = el("span", "tb-dot");
+        d.style.background = active.color;
+        banner.appendChild(d);
+      }
+      banner.appendChild(el("span", "tb-text", active.name + "’s turn"));
+      banner.hidden = false;
+    } else {
+      banner.hidden = true;
+    }
   }
 
   function stopGame() {
@@ -339,6 +444,25 @@
       try { state.instance.stop(); } catch (e) {}
     }
     state.instance = null;
+    commitScores();
+  }
+
+  function commitScores() {
+    if (sessionGameId && gameMetric(sessionGameId) !== "wins") {
+      Object.keys(sessionScores).forEach((name) => {
+        const v = sessionScores[name];
+        if (Number.isFinite(v)) board.log(sessionGameId, { name: name, score: v });
+      });
+    }
+    sessionScores = {};
+    sessionGameId = null;
+  }
+
+  // games call api.recordWin(name) when someone wins (win-metric leaderboards)
+  function recordWinFor(gameId, name) {
+    if (!gameId || !name) return;
+    board.log(gameId, { name: name, win: 1 });
+    renderGameLB();
   }
 
   function initGameScreen() {
@@ -349,6 +473,7 @@
     $("#start-btn").addEventListener("click", startGame);
     $("#restart-btn").addEventListener("click", () => {
       $("#board").innerHTML = "";
+      $("#turn-banner").hidden = true;
       $("#scoreboard").innerHTML = "";
       $("#status-line").textContent = "";
       launch();
@@ -360,12 +485,106 @@
     $("#game-search").addEventListener("input", renderCards);
   }
 
+  /* ---------- leaderboard rendering ---------- */
+  function fillLBList(ol, gameId, emptyMsg) {
+    const metric = gameMetric(gameId);
+    const list = board.top(gameId, lbWindow, metric);
+    ol.innerHTML = "";
+    if (!list.length) {
+      ol.appendChild(el("li", "lb-empty", emptyMsg || "No scores yet 🌱"));
+      return;
+    }
+    list.forEach((e, i) => {
+      const row = el("li", "lb-row" + (i < 3 ? " top" + (i + 1) : ""));
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1);
+      row.appendChild(el("span", "lb-rank", medal));
+      row.appendChild(el("span", "lb-name", e.name));
+      const val = metric === "wins" ? e.score + (e.score === 1 ? " win" : " wins") : String(e.score);
+      row.appendChild(el("span", "lb-score", val));
+      ol.appendChild(row);
+    });
+  }
+
+  // time-window filter (shared by modal + in-game panel)
+  function setLBWindow(w) {
+    lbWindow = w;
+    localStorage.setItem("mint_lb_window", w);
+    ["#lb-window", "#game-lb-window"].forEach((sel) => {
+      const c = $(sel);
+      if (c) [...c.children].forEach((b) => b.classList.toggle("active", b.dataset.w === w));
+    });
+    if (!$("#lb-overlay").hidden) renderLeaderboard();
+    renderGameLB();
+  }
+  function wireWindowSeg(sel) {
+    const c = $(sel);
+    if (c) [...c.children].forEach((b) => b.addEventListener("click", () => setLBWindow(b.dataset.w)));
+  }
+
+  function renderLeaderboard() {
+    fillLBList($("#lb-list"), $("#lb-game").value, "No scores yet — go play and set a record! 🌱");
+  }
+
+  // in-game side panel — shows the current game's top 10
+  const SIDE_KEY = "mint_lb_side";
+  function applyLBSide() {
+    $("#play-main").classList.toggle("lb-left", localStorage.getItem(SIDE_KEY) === "left");
+  }
+  function renderGameLB() {
+    const def = state.current;
+    if (!def) return;
+    $("#game-lb-title").textContent = "🏆 Top 10 — " + def.name;
+    fillLBList($("#game-lb-list"), def.id, "No scores yet — be the first! 🌱");
+    applyLBSide();
+  }
+
+  function openLeaderboard() {
+    const sel = $("#lb-game");
+    sel.innerHTML = "";
+    GAMES.forEach((g) => {
+      const o = document.createElement("option");
+      o.value = g.id;
+      o.textContent = g.emoji + " " + g.name;
+      sel.appendChild(o);
+    });
+    if (state.current) sel.value = state.current.id;
+    renderLeaderboard();
+    $("#lb-overlay").hidden = false;
+  }
+
+  function initLeaderboard() {
+    $("#leaderboard-btn").addEventListener("click", openLeaderboard);
+    $("#lb-close").addEventListener("click", () => ($("#lb-overlay").hidden = true));
+    $("#lb-game").addEventListener("change", renderLeaderboard);
+    $("#lb-clear").addEventListener("click", () => {
+      const gameId = $("#lb-game").value;
+      board.clear(gameId);
+      renderLeaderboard();
+      toast("Scores cleared for this game 🗑");
+    });
+    $("#lb-overlay").addEventListener("click", (e) => {
+      if (e.target === $("#lb-overlay")) $("#lb-overlay").hidden = true;
+    });
+    $("#game-lb-side").addEventListener("click", () => {
+      const left = localStorage.getItem(SIDE_KEY) === "left";
+      localStorage.setItem(SIDE_KEY, left ? "right" : "left");
+      applyLBSide();
+      scheduleFit();
+    });
+    wireWindowSeg("#lb-window");
+    wireWindowSeg("#game-lb-window");
+    setLBWindow(lbWindow);
+    applyLBSide();
+  }
+
   /* ---------- public API ---------- */
   window.Arcade = {
     register: (def) => GAMES.push(def),
     boot: function () {
       initLogin();
       initGameScreen();
+      initAutoFit();
+      initLeaderboard();
       const saved = store.get();
       if (saved) {
         setUser(saved);

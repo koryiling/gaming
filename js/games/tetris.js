@@ -8,7 +8,8 @@ Arcade.register({
   minPlayers: 1,
   maxPlayers: 1,
   rules: [
-    "← / → move · ↑ rotate · ↓ soft drop · Space hard drop.",
+    "← / → move · ↑ or the 🔄 Rotate button to turn the block · ↓ soft drop · Space hard drop.",
+    "The bordered “Next” box previews the block coming up.",
     "Fill an entire row to clear it and score points.",
     "Clearing several rows at once scores much more.",
     "The blocks speed up as you level up. Don't reach the top!",
@@ -21,11 +22,32 @@ Arcade.register({
   create(api) {
     const COLS = 10, ROWS = 20;
     const CELL = Math.floor(Math.min(300, window.innerWidth - 80) / COLS);
+
+    // layout: playfield on the left, side panel (Next preview + Rotate button) on the right
+    const wrap = api.el("div", "");
+    wrap.style.cssText = "display:flex;gap:16px;align-items:flex-start;justify-content:center";
     const canvas = document.createElement("canvas");
     canvas.width = COLS * CELL; canvas.height = ROWS * CELL;
     canvas.tabIndex = 0;
-    api.board.appendChild(canvas);
+    wrap.appendChild(canvas);
     const ctx = canvas.getContext("2d");
+
+    const side = api.el("div", "");
+    side.style.cssText = "display:flex;flex-direction:column;gap:12px;align-items:center";
+    const nextLabel = api.el("div", "", "Next");
+    nextLabel.style.cssText = "font-weight:800;color:var(--ink);font-size:15px";
+    const PCELL = Math.max(14, Math.floor(CELL * 0.7));
+    const preview = document.createElement("canvas");
+    preview.width = preview.height = 4 * PCELL;
+    preview.style.cssText = "background:#fff;border:2px solid var(--mint-300);border-radius:12px;box-shadow:var(--shadow)";
+    const pctx = preview.getContext("2d");
+    const rotateBtn = api.el("button", "btn primary", "🔄 Rotate");
+    rotateBtn.style.width = "100%";
+    side.appendChild(nextLabel);
+    side.appendChild(preview);
+    side.appendChild(rotateBtn);
+    wrap.appendChild(side);
+    api.board.appendChild(wrap);
 
     const COLORS = { I: "#16a085", O: "#f6c343", T: "#9b59b6", S: "#43b884", Z: "#e74c3c", J: "#3498db", L: "#e67e22" };
     const SHAPES = {
@@ -35,20 +57,38 @@ Arcade.register({
     };
     const SPAN = { I: 4, O: 4, T: 3, S: 3, Z: 3, J: 3, L: 3 };
 
-    let grid, piece, score, lines, level, over, dropT = null;
+    let grid, piece, next, score, lines, level, over, dropT = null;
     const startLevel = api.config.options.level;
 
     function reset() {
       grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
       score = 0; lines = 0; level = startLevel; over = false;
+      next = bag();
       spawn(); updateScore(); setSpeed();
-      api.setStatus("← → move · ↑ rotate · ↓ soft · Space hard-drop");
+      api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop");
     }
     function bag() { const k = "IOTSZJL"; return k[(Math.random() * 7) | 0]; }
     function spawn() {
-      const t = bag();
+      const t = next;
+      next = bag();
       piece = { type: t, cells: SHAPES[t].map((c) => c.slice()), x: 3, y: 0 };
+      drawNext();
       if (collide(piece.cells, piece.x, piece.y)) gameOver();
+    }
+    function drawNext() {
+      pctx.fillStyle = "#fff"; pctx.fillRect(0, 0, preview.width, preview.height);
+      const cells = SHAPES[next];
+      const xs = cells.map((c) => c[0]), ys = cells.map((c) => c[1]);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const ox = (4 - (maxX - minX + 1)) / 2 - minX;
+      const oy = (4 - (maxY - minY + 1)) / 2 - minY;
+      cells.forEach(([x, y]) => {
+        pctx.fillStyle = COLORS[next];
+        pctx.fillRect((x + ox) * PCELL + 1, (y + oy) * PCELL + 1, PCELL - 2, PCELL - 2);
+        pctx.fillStyle = "rgba(255,255,255,.25)";
+        pctx.fillRect((x + ox) * PCELL + 1, (y + oy) * PCELL + 1, PCELL - 2, 4);
+      });
     }
     function collide(cells, ox, oy) {
       return cells.some(([x, y]) => {
@@ -129,6 +169,10 @@ Arcade.register({
       e.preventDefault();
     }
     window.addEventListener("keydown", onKey);
+    rotateBtn.addEventListener("click", () => {
+      if (over) { reset(); draw(); canvas.focus(); return; }
+      rotate(); draw(); canvas.focus();
+    });
 
     reset(); draw(); canvas.focus();
     return { stop() { if (dropT) clearInterval(dropT); window.removeEventListener("keydown", onKey); } };
