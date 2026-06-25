@@ -386,15 +386,34 @@ window.__GAME_I18N = {
         "Pilih kelajuan dalam Pilihan — ia semakin laju apabila anda meneruskan. Sekali terlanggar, tamat. Pecahkan rekod terbaik anda! 🦖",
       ],
     },
-    tycoon: {
-      name: "Taikun Pasif",
-      tagline: "Bina empayar perniagaan — beli usaha niaga, kumpul pendapatan pasif, dan kembangkan kekayaan anda sebelum masa tamat.",
+    moneytycoon: {
+      name: "Taikun Wang",
+      tagline: "Ketik untuk memperoleh wang, laburkan semula dalam perniagaan, dan naik ranking kekayaan.",
       rules: [
-        "Ketik 💰 Hustle untuk memperoleh wang pertama anda secara manual.",
-        "Belanjakan wang pada usaha niaga (🍋 → 🚀) — setiap satu memperoleh wang secara automatik setiap saat.",
-        "Beli lebih banyak usaha niaga untuk menambah pendapatannya; setiap pembelian menjadikan yang seterusnya lebih mahal.",
-        "Skor anda ialah jumlah wang yang anda peroleh sebelum pemasa tamat.",
-        "Pilih tempoh larian dalam Pilihan — setiap tempoh ada papan pendahulunya sendiri. Bina empayar terbesar! 🏭",
+        "Ketik butang 💵 besar untuk memperoleh wang secara manual.",
+        "Belanjakan wang pada perniagaan — setiap satu memperoleh wang setiap saat, selamanya.",
+        "Membeli lebih banyak perniagaan menaikkan harganya, jadi teruskan melabur semula.",
+        "Semua orang disusun mengikut wang semasa, tertinggi dahulu. 🗑 Set semula mengosongkan entri anda sendiri.",
+      ],
+    },
+    cookingtycoon: {
+      name: "Taikun Memasak",
+      tagline: "Bina setiap pesanan bahan demi bahan mengikut susunan betul, rangkai kombo, peroleh wang.",
+      rules: [
+        "Setiap tiket pesanan menyenaraikan bahan mengikut susunan ia perlu disusun.",
+        "Ketik bahan dari dulang anda mengikut urutan yang betul untuk memasang hidangan.",
+        "Siapkan pesanan untuk memperoleh wang dan menambah kombo 🔥 anda — pesanan lebih panjang membayar lebih banyak.",
+        "Bahan yang salah merosakkan hidangan dan memutuskan kombo anda. Semua orang disusun mengikut wang.",
+      ],
+    },
+    escape: {
+      name: "Bilik Melarikan Diri",
+      tagline: "Cari petunjuk tersembunyi, pecahkan kod kunci, dan larikan diri dari setiap bilik sebelum masa tamat.",
+      rules: [
+        "Ketik objek dalam bilik untuk memeriksanya — sesetengahnya menyembunyikan digit kod kunci.",
+        "Buku nota anda mengingati setiap petunjuk yang anda jumpa, mengikut susunan kunci.",
+        "Masukkan kod penuh pada pad kekunci dan tekan 🔓 untuk membuka pintu.",
+        "Larikan diri dari semua bilik secepat mungkin — masa terbaik anda ialah skor anda! 🏆",
       ],
     },
   },
@@ -784,15 +803,34 @@ window.__GAME_I18N = {
         "在选项中选择速度——它会越跑越快。撞到一次就结束。挑战你的最佳成绩！🦖",
       ],
     },
-    tycoon: {
-      name: "放置大亨",
-      tagline: "打造商业帝国——购买产业、累积被动收入，在限时内壮大你的财富。",
+    moneytycoon: {
+      name: "金钱大亨",
+      tagline: "点击赚钱，把现金再投资到生意中，冲上财富排行榜。",
       rules: [
-        "点击 💰 Hustle 亲手赚到第一桶金。",
-        "把现金投入产业（🍋 → 🚀）——每项产业每秒自动赚钱。",
-        "多买同一产业可叠加它的收入；每次购买都会让下一次更贵。",
-        "你的得分是计时结束前赚到的现金总额。",
-        "在选项中选择时长——每种时长都有独立排行榜。打造最大的帝国吧！🏭",
+        "点击大大的 💵 按钮亲手赚钱。",
+        "把现金投入生意——每项生意每秒都会赚钱，永不停歇。",
+        "购买越多同类生意，价格越高，所以要不断再投资。",
+        "所有人按当前金钱排名，最高者居首。🗑 重置会清除你自己的记录。",
+      ],
+    },
+    cookingtycoon: {
+      name: "烹饪大亨",
+      tagline: "按正确顺序逐一摆放食材完成每份订单，串联连击，赚取现金。",
+      rules: [
+        "每张订单都按食材必须叠放的顺序列出它们。",
+        "按正确顺序从托盘中点击食材来组装菜品。",
+        "完成订单可赚取现金并提升你的 🔥 连击——订单越长，报酬越高。",
+        "放错食材会作废菜品并中断连击。所有人按金钱排名。",
+      ],
+    },
+    escape: {
+      name: "密室逃脱",
+      tagline: "搜寻隐藏线索，破解锁的密码，在限时内逃出每一间密室。",
+      rules: [
+        "点击房间里的物品来搜查——有些藏着密码的一位数字。",
+        "你的笔记本会按锁的顺序记下你找到的每条线索。",
+        "在键盘上输入完整密码，然后按 🔓 打开门。",
+        "尽快逃出所有房间——你的最佳时间就是分数！🏆",
       ],
     },
   }
