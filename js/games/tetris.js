@@ -9,7 +9,8 @@ Arcade.register({
   maxPlayers: 1,
   leaderboard: { type: "score" }, // keep each player's highest score, ranked highest → lowest
   rules: [
-    "← / → move · ↑ or the 🔄 Rotate button to turn the block · ↓ soft drop · Space hard drop.",
+    "On a computer, play with the keyboard: ← / → move · ↑ rotate · ↓ soft drop · Space hard drop.",
+    "On a phone, tap the on-screen buttons: ◀ ▶ move · 🔄 rotate · ▼ soft drop · ⤓ hard drop.",
     "The bordered “Next” box previews the block coming up.",
     "Fill an entire row to clear it and score points.",
     "Clearing several rows at once scores much more.",
@@ -93,7 +94,7 @@ Arcade.register({
       pauseBtn.textContent = "⏸️ Pause";
       next = bag();
       spawn(); updateScore(); setSpeed();
-      api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop · P pause");
+      api.setStatus("← → move · ↑ rotate (🔄 button on phone) · ↓ soft · Space hard-drop · P pause");
     }
     function bag() { const k = "IOTSZJL"; return k[(Math.random() * 7) | 0]; }
     function spawn() {
@@ -181,7 +182,7 @@ Arcade.register({
         pauseBtn.textContent = "⏸️ Pause";
         clearSave(); // a live game isn't resumable; only paused games persist
         setSpeed();
-        api.setStatus("← → move · ↑ / 🔄 rotate · ↓ soft · Space hard-drop · P pause");
+        api.setStatus("← → move · ↑ rotate (🔄 button on phone) · ↓ soft · Space hard-drop · P pause");
         canvas.focus();
       }
       draw();

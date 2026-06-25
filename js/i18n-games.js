@@ -127,7 +127,8 @@ window.__GAME_I18N = {
       name: "Tetris",
       tagline: "Susun blok jatuh, kosongkan baris penuh, bertahan selama mungkin.",
       rules: [
-        "← / → gerak · ↑ atau butang 🔄 Putar untuk memutar blok · ↓ jatuh perlahan · Space jatuh terus.",
+        "Pada komputer, guna papan kekunci: ← / → gerak · ↑ putar · ↓ jatuh perlahan · Space jatuh terus.",
+        "Pada telefon, ketuk butang skrin: ◀ ▶ gerak · 🔄 putar · ▼ jatuh perlahan · ⤓ jatuh terus.",
         "Kotak “Next” berbingkai memaparkan blok yang akan datang.",
         "Penuhkan satu baris untuk mengosongkannya dan mengumpul mata.",
         "Mengosongkan beberapa baris serentak mendapat lebih banyak mata.",
@@ -491,7 +492,8 @@ window.__GAME_I18N = {
       name: "俄罗斯方块",
       tagline: "堆叠下落的方块，消除填满的行，尽量撑得久一点。",
       rules: [
-        "← / → 移动 · ↑ 或 🔄 旋转按钮来转动方块 · ↓ 软降 · 空格硬降。",
+        "在电脑上用键盘：← / → 移动 · ↑ 旋转 · ↓ 软降 · 空格硬降。",
+        "在手机上点屏幕按钮：◀ ▶ 移动 · 🔄 旋转 · ▼ 软降 · ⤓ 硬降。",
         "带边框的“Next”框预览即将出现的方块。",
         "填满一整行即可消除并得分。",
         "一次消除多行能获得多得多的分数。",
