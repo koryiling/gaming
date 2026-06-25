@@ -69,7 +69,7 @@
       win: "win", wins: "wins",
       try: "try", tries: "tries",
       justNow: "just now", minsAgo: "{n}m ago", hrsAgo: "{n}h ago", daysAgo: "{n}d ago",
-      tag: { All: "All", Classic: "Classic", Arcade: "Arcade", Puzzle: "Puzzle", Solo: "Solo", Duel: "Duel", Quick: "Quick", Family: "Family", Word: "Word", Number: "Number", Reflex: "Reflex", Strategy: "Strategy" },
+      tag: { All: "All", Classic: "Classic", Arcade: "Arcade", Puzzle: "Puzzle", Solo: "Solo", Duel: "Duel", Quick: "Quick", Family: "Family", Word: "Word", Number: "Number", Reflex: "Reflex", Strategy: "Strategy", Tycoon: "Tycoon", Idle: "Idle", Money: "Money", Cooking: "Cooking", Detective: "Detective" },
     },
     ms: {
       switchUser: "Log keluar",
@@ -124,7 +124,7 @@
       win: "kemenangan", wins: "kemenangan",
       try: "cubaan", tries: "cubaan",
       justNow: "baru sahaja", minsAgo: "{n}m lalu", hrsAgo: "{n}j lalu", daysAgo: "{n}h lalu",
-      tag: { All: "Semua", Classic: "Klasik", Arcade: "Arked", Puzzle: "Teka-teki", Solo: "Solo", Duel: "Duel", Quick: "Pantas", Family: "Keluarga", Word: "Perkataan", Number: "Nombor", Reflex: "Refleks", Strategy: "Strategi" },
+      tag: { All: "Semua", Classic: "Klasik", Arcade: "Arked", Puzzle: "Teka-teki", Solo: "Solo", Duel: "Duel", Quick: "Pantas", Family: "Keluarga", Word: "Perkataan", Number: "Nombor", Reflex: "Refleks", Strategy: "Strategi", Tycoon: "Taikun", Idle: "Pasif", Money: "Wang", Cooking: "Memasak", Detective: "Detektif" },
     },
     zh: {
       switchUser: "登出",
@@ -179,7 +179,7 @@
       win: "胜", wins: "胜",
       try: "次", tries: "次",
       justNow: "刚刚", minsAgo: "{n}分钟前", hrsAgo: "{n}小时前", daysAgo: "{n}天前",
-      tag: { All: "全部", Classic: "经典", Arcade: "街机", Puzzle: "益智", Solo: "单人", Duel: "对决", Quick: "快速", Family: "家庭", Word: "文字", Number: "数字", Reflex: "反应", Strategy: "策略" },
+      tag: { All: "全部", Classic: "经典", Arcade: "街机", Puzzle: "益智", Solo: "单人", Duel: "对决", Quick: "快速", Family: "家庭", Word: "文字", Number: "数字", Reflex: "反应", Strategy: "策略", Tycoon: "大亨", Idle: "放置", Money: "金钱", Cooking: "烹饪", Detective: "侦探" },
     },
   };
 
