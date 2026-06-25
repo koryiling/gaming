@@ -60,6 +60,10 @@ Or publish it free with **GitHub Pages**:
 | 💪 Tug of War | 2 | mash your key to drag the rope across the line |
 | 💡 Lights Out | 1 | toggle lights and neighbours until all go dark |
 | 🀄 Chinese Idioms | 1 | guess the chéngyǔ from emoji clues — 3 tries, then a hint |
+| 💰 Money Tycoon | 1 | tap to earn, buy businesses for passive income, grow your net worth |
+| 🍳 Cooking Tycoon | 1 | serve customers the right dish, chain combos, earn the most cash |
+
+> 💰 **Tycoon** games live under their own tab in the hub nav bar.
 
 > The leaderboard records high scores (and win tallies for duels like Battleship, War, Dice Duel),
 > filterable by **Today / Week / Month / All time**, shown both in a hub modal and beside each game.

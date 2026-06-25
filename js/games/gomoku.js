@@ -40,18 +40,23 @@ Arcade.register({
     }
     api.board.appendChild(boardEl);
 
+    // Lock all input at the board level (one style write) instead of toggling every cell's
+    // `disabled` — that full-grid pass on each move was what made the game lag.
+    function lockInput(locked) { boardEl.style.pointerEvents = locked ? "none" : "auto"; }
+    // Repaint a single cell — the only DOM write a move needs.
+    function paint(r, c) {
+      const v = grid[r][c];
+      cells[r * N + c].textContent = v >= 0 ? STONE[v] : "";
+    }
+
     function init() {
       grid = Array.from({ length: N }, () => Array(N).fill(-1));
-      turn = 0; over = false; render(); board();
+      turn = 0; over = false;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { cells[r * N + c].textContent = ""; cells[r * N + c].style.background = "transparent"; }
+      lockInput(false); board();
       api.setStatus(STONE[0] + " " + names[0] + " starts — tap a spot.");
     }
     function board() { api.setScores(names.map((n, i) => ({ name: STONE[i] + " " + n, value: "", color: colors[i], turn: i === turn && !over }))); }
-    function render() {
-      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
-        const v = grid[r][c]; const b = cells[r * N + c];
-        b.textContent = v >= 0 ? STONE[v] : ""; b.disabled = v >= 0 || over || (vsAI && turn === 1);
-      }
-    }
     function winLine(r, c, p) {
       for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
         let cnt = 1, line = [[r, c]];
@@ -61,17 +66,17 @@ Arcade.register({
       return null;
     }
     function placeStone(r, c, p) {
-      grid[r][c] = p; render();
+      grid[r][c] = p; paint(r, c);
       const w = winLine(r, c, p);
-      if (w) { over = true; w.forEach(([rr, cc]) => (cells[rr * N + cc].style.background = "#9fe0bf")); if (api.recordWin && !(vsAI && p === 1)) api.recordWin(names[p]); api.setStatus("🏆 " + STONE[p] + " " + names[p] + " gets five — win! 🎉"); board(); return true; }
-      if (grid.every((row) => row.every((x) => x >= 0))) { over = true; api.setStatus("🤝 Board full — a draw!"); return true; }
+      if (w) { over = true; lockInput(true); w.forEach(([rr, cc]) => (cells[rr * N + cc].style.background = "#9fe0bf")); if (api.recordWin && !(vsAI && p === 1)) api.recordWin(names[p]); api.setStatus("🏆 " + STONE[p] + " " + names[p] + " gets five — win! 🎉"); board(); return true; }
+      if (grid.every((row) => row.every((x) => x >= 0))) { over = true; lockInput(true); api.setStatus("🤝 Board full — a draw!"); return true; }
       return false;
     }
     function human(r, c) {
       if (over || grid[r][c] >= 0 || (vsAI && turn === 1)) return;
       if (placeStone(r, c, turn)) return;
       turn = 1 - turn; board();
-      if (vsAI && turn === 1) { api.setStatus("🤖 Computer thinking…"); setTimeout(aiMove, 380); }
+      if (vsAI && turn === 1) { lockInput(true); api.setStatus("🤖 Computer thinking…"); setTimeout(aiMove, 280); }
       else api.setStatus(STONE[turn] + " " + names[turn] + "'s turn.");
     }
     function score(r, c, p) {
@@ -89,20 +94,36 @@ Arcade.register({
       }
       return lineScore(1) * 1.0 + lineScore(0) * 0.9 + (1 - (Math.abs(r - N / 2) + Math.abs(c - N / 2)) / N) * 2;
     }
+    // candidate cells = empties within 2 steps of an existing stone (the only spots worth
+    // considering). Keeps the AI both fast and sensible instead of scanning the whole board.
+    function candidates() {
+      const out = [], seen = new Set(); let any = false;
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] >= 0) {
+        any = true;
+        for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr >= 0 && rr < N && cc >= 0 && cc < N && grid[rr][cc] === -1) {
+            const k = rr * N + cc;
+            if (!seen.has(k)) { seen.add(k); out.push([rr, cc]); }
+          }
+        }
+      }
+      if (!any) { const m = N >> 1; return [[m, m]]; } // empty board → centre
+      return out;
+    }
     function aiMove() {
       if (over) return;
+      const cand = candidates();
       let best = null, bs = -1;
-      const empties = [];
-      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] === -1) {
-        empties.push([r, c]);
+      for (const [r, c] of cand) {
         const s = score(r, c, 1) + Math.random();
         if (s > bs) { bs = s; best = [r, c]; }
       }
       if (!best) return;
-      // beatable AI: about half the time, play a random legal move instead of the best one
-      if (Math.random() < 0.5 && empties.length) best = empties[(Math.random() * empties.length) | 0];
+      // beatable AI: about a third of the time, play a random sensible move instead of the best
+      if (Math.random() < 0.35 && cand.length) best = cand[(Math.random() * cand.length) | 0];
       if (placeStone(best[0], best[1], 1)) return;
-      turn = 0; board(); api.setStatus(STONE[0] + " " + names[0] + "'s turn.");
+      turn = 0; lockInput(false); board(); api.setStatus(STONE[0] + " " + names[0] + "'s turn.");
     }
 
     init();
