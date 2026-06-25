@@ -411,9 +411,9 @@ window.__GAME_I18N = {
       tagline: "Cari petunjuk tersembunyi, pecahkan kod kunci, dan larikan diri dari setiap bilik sebelum masa tamat.",
       rules: [
         "Ketik objek dalam bilik untuk memeriksanya — sesetengahnya menyembunyikan digit kod kunci.",
-        "Buku nota anda mengingati setiap petunjuk yang anda jumpa, mengikut susunan kunci.",
-        "Masukkan kod penuh pada pad kekunci dan tekan 🔓 untuk membuka pintu.",
-        "Larikan diri dari semua bilik secepat mungkin — masa terbaik anda ialah skor anda! 🏆",
+        "Buku nota di sebelah kiri menyenaraikan setiap digit yang anda jumpa, mengikut susunan kunci.",
+        "Taip kod penuh pada pad kekunci dan tekan 🔓 untuk memecahkan kunci.",
+        "Pilih 5, 10 atau 20 bilik — setiap panjang ada rankingnya sendiri. Larikan diri terpantas untuk mengetuainya! 🏆",
       ],
     },
   },
@@ -828,9 +828,9 @@ window.__GAME_I18N = {
       tagline: "搜寻隐藏线索，破解锁的密码，在限时内逃出每一间密室。",
       rules: [
         "点击房间里的物品来搜查——有些藏着密码的一位数字。",
-        "你的笔记本会按锁的顺序记下你找到的每条线索。",
-        "在键盘上输入完整密码，然后按 🔓 打开门。",
-        "尽快逃出所有房间——你的最佳时间就是分数！🏆",
+        "左侧的笔记本会按锁的顺序列出你找到的每一位数字。",
+        "在键盘上输入完整密码，然后按 🔓 破解锁。",
+        "选择 5、10 或 20 个房间——每种长度都有独立排行。逃得最快者登顶！🏆",
       ],
     },
   }

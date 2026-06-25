@@ -43,6 +43,7 @@ body{
   font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;
   border:none;border-radius:999px;padding:11px 20px;color:var(--ink);
   background:var(--mint-200);transition:transform .08s ease,box-shadow .2s,background .2s;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .btn:hover{transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
@@ -216,7 +217,8 @@ canvas{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);touc
 /* generic board helpers used by games */
 .grid-board{display:grid;gap:8px;background:var(--mint-200);padding:12px;border-radius:var(--radius);box-shadow:var(--shadow)}
 .cell{background:#fff;border:none;border-radius:12px;display:grid;place-items:center;cursor:pointer;
-  font-weight:800;transition:transform .08s,background .15s;font-family:inherit}
+  font-weight:800;transition:transform .08s,background .15s;font-family:inherit;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .cell:hover{background:var(--mint-50)}
 .cell:disabled{cursor:default}
 
