@@ -232,6 +232,7 @@
     { key: "chinese", label: "🀄 Chinese" },
     { key: "english", label: "🔤 English" },
     { key: "number", label: "🔢 Number" },
+    { key: "tycoon", label: "💰 Tycoon" },
   ];
   function renderNav() {
     const wrap = $("#game-nav");
