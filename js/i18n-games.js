@@ -364,6 +364,39 @@ window.__GAME_I18N = {
         "Selesaikan semua pusingan untuk tamat dengan skor terbaik anda!",
       ],
     },
+    wordsearch: {
+      name: "Carian Perkataan",
+      tagline: "Buru perkataan tersembunyi dalam grid huruf — seret untuk menjejakinya.",
+      rules: [
+        "Perkataan tersembunyi dalam grid — mendatar, menegak, menyerong, ke depan atau ke belakang.",
+        "Seret dari huruf pertama ke huruf terakhir untuk menjejaki perkataan (seret-ketik berfungsi pada skrin sentuh).",
+        "Jumpa perkataan dan ia dipangkah daripada senarai serta dikunci dengan warna.",
+        "Pilih kesukaran: Mudah (8), Sederhana (12) atau Sukar (20) perkataan.",
+        "Anda dikejar masa — cari semua perkataan secepat mungkin.",
+        "Setiap tahap kesukaran ada ranking tersendiri — penyelesaian penuh terpantas mengetuai papan! 🏆",
+      ],
+    },
+    dino: {
+      name: "Larian Dino",
+      tagline: "Tiada internet? Tiada masalah. Lompat kaktus dan berlari sejauh mungkin.",
+      rules: [
+        "Tekan Space / ↑ / ketik untuk MELOMPAT melepasi kaktus.",
+        "Tekan ↓ untuk MENUNDUK di bawah burung yang terbang.",
+        "Semakin lama anda bertahan, semakin tinggi skor anda.",
+        "Pilih kelajuan dalam Pilihan — ia semakin laju apabila anda meneruskan. Sekali terlanggar, tamat. Pecahkan rekod terbaik anda! 🦖",
+      ],
+    },
+    tycoon: {
+      name: "Taikun Pasif",
+      tagline: "Bina empayar perniagaan — beli usaha niaga, kumpul pendapatan pasif, dan kembangkan kekayaan anda sebelum masa tamat.",
+      rules: [
+        "Ketik 💰 Hustle untuk memperoleh wang pertama anda secara manual.",
+        "Belanjakan wang pada usaha niaga (🍋 → 🚀) — setiap satu memperoleh wang secara automatik setiap saat.",
+        "Beli lebih banyak usaha niaga untuk menambah pendapatannya; setiap pembelian menjadikan yang seterusnya lebih mahal.",
+        "Skor anda ialah jumlah wang yang anda peroleh sebelum pemasa tamat.",
+        "Pilih tempoh larian dalam Pilihan — setiap tempoh ada papan pendahulunya sendiri. Bina empayar terbesar! 🏭",
+      ],
+    },
   },
   zh: {
     snake: {
@@ -727,6 +760,39 @@ window.__GAME_I18N = {
         "猜错后，点击 💡 提示可显示拼音和释义（每题一次）。",
         "猜的次数越少、不用提示，得分越高。",
         "完成所有回合，争取最高分！",
+      ],
+    },
+    wordsearch: {
+      name: "找单词",
+      tagline: "在字母网格中寻找隐藏的单词——拖动划过即可圈出。",
+      rules: [
+        "单词藏在网格里——横向、纵向、斜向，正着或反着都有。",
+        "从第一个字母拖到最后一个字母来圈出单词（触屏可用拖动）。",
+        "找到单词后，它会从清单中划掉并以颜色锁定。",
+        "选择难度：简单（8 个）、中等（12 个）或困难（20 个）单词。",
+        "计时进行——尽快找出所有单词。",
+        "每种难度都有独立排行——最快全部完成者登顶！🏆",
+      ],
+    },
+    dino: {
+      name: "小恐龙快跑",
+      tagline: "没网络？没问题。跳过仙人掌，跑得越远越好。",
+      rules: [
+        "按 空格 / ↑ / 点击 来跳过仙人掌。",
+        "按 ↓ 蹲下，躲过飞鸟。",
+        "坚持得越久，分数越高。",
+        "在选项中选择速度——它会越跑越快。撞到一次就结束。挑战你的最佳成绩！🦖",
+      ],
+    },
+    tycoon: {
+      name: "放置大亨",
+      tagline: "打造商业帝国——购买产业、累积被动收入，在限时内壮大你的财富。",
+      rules: [
+        "点击 💰 Hustle 亲手赚到第一桶金。",
+        "把现金投入产业（🍋 → 🚀）——每项产业每秒自动赚钱。",
+        "多买同一产业可叠加它的收入；每次购买都会让下一次更贵。",
+        "你的得分是计时结束前赚到的现金总额。",
+        "在选项中选择时长——每种时长都有独立排行榜。打造最大的帝国吧！🏭",
       ],
     },
   }
