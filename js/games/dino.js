@@ -4,7 +4,7 @@ Arcade.register({
   id: "dino",
   name: "Dino Run",
   emoji: "🦖",
-  tagline: "No internet? No problem. Jump the cacti and run forever.",
+  tagline: "No internet? No problem. Jump the cacti and run as far as you can.",
   tags: ["Arcade", "Reflex", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
@@ -13,16 +13,27 @@ Arcade.register({
     "Press Space / ↑ / tap to JUMP over cacti.",
     "Press ↓ to DUCK under flying birds.",
     "The longer you survive, the higher your score climbs.",
-    "It speeds up the farther you go — one hit ends the run. Beat your best! 🦖",
+    "Pick a speed in Options — it ramps up as you go. One hit ends the run. Beat your best! 🦖",
+  ],
+  options: [
+    { key: "diff", label: "Speed", type: "select", default: "normal",
+      choices: [{ label: "🐢 Chill", value: "easy" }, { label: "🏃 Normal", value: "normal" }, { label: "⚡ Fast", value: "hard" }] },
   ],
 
   create(api) {
     const W = Math.min(620, window.innerWidth - 28), H = Math.min(220, Math.round(W * 0.36));
     const canvas = document.createElement("canvas");
     canvas.width = W; canvas.height = H; canvas.tabIndex = 0;
-    canvas.style.cssText = "max-width:100%;border-radius:12px;border:2px solid var(--mint-300);background:#fcfff9;touch-action:manipulation";
+    canvas.style.cssText = "max-width:100%;border-radius:12px;border:2px solid #d8c4a0;background:#fcf8ef;touch-action:manipulation";
     api.board.appendChild(canvas);
     const ctx = canvas.getContext("2d");
+
+    // difficulty: starting speed + how quickly it ramps up
+    const TUNE = {
+      easy:   { start: 3.2, ramp: 0.0008 },
+      normal: { start: 4.2, ramp: 0.0013 },
+      hard:   { start: 5.6, ramp: 0.0020 },
+    }[api.config.options.diff] || { start: 4.2, ramp: 0.0013 };
 
     const GROUND = H - 26;
     const GRAV = 0.7, JUMP = -11.5;
@@ -31,13 +42,13 @@ Arcade.register({
 
     function reset() {
       dino = { x: 46, y: GROUND, vy: 0, w: 22, h: 26, onGround: true };
-      obs = []; score = 0; speed = 5.2; alive = true; started = false; frame = 0; ducking = false;
+      obs = []; score = 0; speed = TUNE.start; alive = true; started = false; frame = 0; ducking = false;
       updateScore();
       api.setStatus("Space / ↑ / tap to jump · ↓ to duck 🦖");
     }
     function updateScore() {
       api.setScores([
-        { name: api.config.username, value: Math.floor(score), color: "#2e9d6c" },
+        { name: api.config.username, value: Math.floor(score), color: "#c0712f" },
         { name: "Best", value: best, color: "#e67e22" },
       ]);
     }
@@ -50,7 +61,7 @@ Arcade.register({
 
     function spawn() {
       // bird (duck under) appears only once it's fast enough; otherwise a cactus (jump over)
-      const bird = speed > 6.5 && Math.random() < 0.32;
+      const bird = speed > 5.5 && Math.random() < 0.3;
       if (bird) {
         obs.push({ x: W + 10, y: GROUND - 38, w: 26, h: 18, bird: true });
       } else {
@@ -69,17 +80,17 @@ Arcade.register({
     function step() {
       frame++;
       ctx.clearRect(0, 0, W, H);
-      // ground line
-      ctx.strokeStyle = "#9bbfaa"; ctx.lineWidth = 2;
+      // sandy ground line
+      ctx.strokeStyle = "#c2a878"; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(0, GROUND + 2); ctx.lineTo(W, GROUND + 2); ctx.stroke();
       // drifting ground specks
-      ctx.fillStyle = "#cfe3d6";
+      ctx.fillStyle = "#e0cda6";
       for (let i = 0; i < 6; i++) { const gx = (W - ((frame * speed * 0.5 + i * 120) % (W + 60))); ctx.fillRect(gx, GROUND + 8, 6, 3); }
 
       if (started && alive) {
         score += speed * 0.04;
         if (Math.floor(score) > best) { best = Math.floor(score); api.saveBest(best); }
-        speed += 0.0016; // gradual ramp-up
+        speed += TUNE.ramp; // gradual ramp-up
         // physics
         dino.vy += GRAV; dino.y += dino.vy;
         if (dino.y >= GROUND) { dino.y = GROUND; dino.vy = 0; dino.onGround = true; }
@@ -92,26 +103,26 @@ Arcade.register({
         updateScore();
       }
 
-      // obstacles draw
+      // obstacles draw — cacti in a warm sandy brown (not green)
       obs.forEach((o) => {
         if (o.bird) {
           ctx.font = "20px serif"; ctx.textAlign = "left"; ctx.textBaseline = "top";
           ctx.fillText(frame % 20 < 10 ? "🐦" : "🕊️", o.x, o.y - 2);
         } else {
-          ctx.fillStyle = "#2e9d6c";
+          ctx.fillStyle = "#b07a36";
           ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.fillStyle = "#8a5d24"; // arms + shading
           ctx.fillRect(o.x - 5, o.y + o.h * 0.35, 5, 4);
           ctx.fillRect(o.x + o.w, o.y + o.h * 0.2, 5, 4);
         }
       });
 
       // dino
-      const dh = ducking ? 14 : dino.h;
       ctx.font = (ducking ? 22 : 28) + "px serif"; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
       ctx.fillText(alive ? "🦖" : "💥", dino.x - 4, dino.y + 4);
 
-      // score
-      ctx.fillStyle = "#173a2b"; ctx.font = "bold 16px monospace"; ctx.textAlign = "right"; ctx.textBaseline = "top";
+      // score readout
+      ctx.fillStyle = "#5a4426"; ctx.font = "bold 16px monospace"; ctx.textAlign = "right"; ctx.textBaseline = "top";
       ctx.fillText("HI " + String(best).padStart(5, "0") + "  " + String(Math.floor(score)).padStart(5, "0"), W - 10, 10);
 
       if (alive) raf = requestAnimationFrame(step);
