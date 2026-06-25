@@ -28,12 +28,13 @@ Arcade.register({
     api.board.appendChild(canvas);
     const ctx = canvas.getContext("2d");
 
-    // difficulty: starting speed + how quickly it ramps up
+    // difficulty: starting speed, how quickly it ramps up, and the extra breathing
+    // room between obstacles (gap). Easier = more space to react.
     const TUNE = {
-      easy:   { start: 3.2, ramp: 0.0008 },
-      normal: { start: 4.2, ramp: 0.0013 },
-      hard:   { start: 5.6, ramp: 0.0020 },
-    }[api.config.options.diff] || { start: 4.2, ramp: 0.0013 };
+      easy:   { start: 3.2, ramp: 0.0008, gap: 130 },
+      normal: { start: 4.2, ramp: 0.0013, gap: 95 },
+      hard:   { start: 5.6, ramp: 0.0020, gap: 65 },
+    }[api.config.options.diff] || { start: 4.2, ramp: 0.0013, gap: 95 };
 
     const GROUND = H - 26;
     const GRAV = 0.7, JUMP = -11.5;
@@ -94,9 +95,10 @@ Arcade.register({
         // physics
         dino.vy += GRAV; dino.y += dino.vy;
         if (dino.y >= GROUND) { dino.y = GROUND; dino.vy = 0; dino.onGround = true; }
-        // obstacles
-        const gap = Math.max(46, 120 - speed * 4);
-        if (!obs.length || (W - obs[obs.length - 1].x) > gap + Math.random() * 120) spawn();
+        // obstacles — keep them at least a full jump apart (speed*32 ≈ one jump's reach)
+        // plus the difficulty buffer, so the next one is always clearable and never crowds you.
+        const minGap = speed * 32 + TUNE.gap;
+        if (!obs.length || (W - obs[obs.length - 1].x) > minGap + Math.random() * 90) spawn();
         obs.forEach((o) => (o.x -= speed));
         obs = obs.filter((o) => o.x + o.w > -4);
         for (const o of obs) if (hit(o)) return die();
