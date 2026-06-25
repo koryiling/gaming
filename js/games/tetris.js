@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Puzzle", "Arcade", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // keep each player's highest score, ranked highest → lowest
   rules: [
     "← / → move · ↑ or the 🔄 Rotate button to turn the block · ↓ soft drop · Space hard drop.",
     "The bordered “Next” box previews the block coming up.",
@@ -187,7 +188,8 @@ Arcade.register({
     function gameOver() {
       over = true; if (dropT) clearInterval(dropT);
       clearSave();
-      api.setStatus("💥 Game over — score <b>" + score + "</b>, " + lines + " lines. Hit Restart to retry.");
+      if (api.submitScore) api.submitScore(score); // bank the final score; the board keeps your highest
+      api.setStatus("💥 Game over — score <b>" + score + "</b>, " + lines + " lines saved to the leaderboard 🏆. Hit Restart to retry.");
     }
     function draw() {
       ctx.fillStyle = "#f1fbf5"; ctx.fillRect(0, 0, canvas.width, canvas.height);
