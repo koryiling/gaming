@@ -23,13 +23,20 @@ html,body{height:100%}
 body{
   font-family:var(--font);
   color:var(--ink);
-  background:
-    radial-gradient(1200px 500px at 80% -10%, var(--mint-200), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, var(--mint-200), transparent 55%),
-    var(--mint-50);
+  /* Seventeen animal-mascot wallpaper, softened by a mint scrim so game cards + text stay readable */
+  background-color:var(--mint-50);
+  background-image:
+    linear-gradient(rgba(241,251,245,.62), rgba(241,251,245,.74)),
+    url(../bg.jpg);
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:cover;
+  background-attachment:fixed;
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
 }
+/* phones: fixed backgrounds jank/zoom on mobile, so let it scroll normally */
+@media (max-width:640px){ body{ background-attachment:scroll; } }
 
 /* ===== Buttons ===== */
 .btn{
