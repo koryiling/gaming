@@ -10,20 +10,30 @@ Arcade.register({
   tags: ["Word", "Puzzle", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
-  leaderboard: { type: "score" }, // most words found in one game ranks highest → lowest
+  leaderboard: {
+    type: "time", // fastest full clear first; each difficulty ranked separately
+    categories: [ // a separate ranking per difficulty, shown Hard → Medium → Easy
+      { key: "Hard", label: "🔴 Hard" },
+      { key: "Medium", label: "🟠 Medium" },
+      { key: "Easy", label: "🟢 Easy" },
+    ],
+  },
   rules: [
     "Words hide in the grid — across, down, diagonally, forwards or backwards.",
     "Drag from the first letter to the last to trace a word (tap-drag works on touch).",
     "Find a word and it's crossed off the list and locked in colour.",
-    "Pick how many words to hunt (1–30) on the setup screen.",
-    "Your score is the number of words you find — clear them all for the top spot! 🏆",
+    "Pick a difficulty: Easy (8), Medium (12) or Hard (20) words.",
+    "You're on the clock — find every word as fast as you can.",
+    "Each difficulty has its own ranking — fastest full clear tops the board! 🏆",
   ],
   options: [
-    { key: "count", label: "How many words", type: "range", min: 1, max: 30, default: 12, suffix: " words" },
+    { key: "count", label: "Difficulty", type: "select", default: 8,
+      choices: [{ label: "Easy (8 words)", value: 8 }, { label: "Medium (12 words)", value: 12 }, { label: "Hard (20 words)", value: 20 }] },
   ],
 
   create(api) {
     const COUNT = Math.max(1, Math.min(30, api.config.options.count | 0));
+    const CAT = { 8: "Easy", 12: "Medium", 20: "Hard" }[COUNT] || "Easy"; // leaderboard category
     // A roomy, family-friendly vocabulary (A–Z only). Easy to extend — just add more.
     const WORDS = (
       "CAT DOG FOX OWL BEE ANT BAT COW PIG HEN RAT BUG ELK APE EEL " +
@@ -133,7 +143,10 @@ Arcade.register({
 
     // ---- state + helpers ----
     let found = 0, over = false, dragging = false, startCell = null, path = [];
+    let t0 = performance.now(), tick = null, finalElapsed = 0;
     const foundCells = new Set();
+    function elapsedSec() { return Math.max(0, Math.round((performance.now() - t0) / 1000)); }
+    function fmt(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
     function at(r, c) { return cellEls[r * size + c]; }
     function cellFromPoint(x, y) {
       const e = document.elementFromPoint(x, y);
@@ -160,9 +173,11 @@ Arcade.register({
       cells.forEach(([r, c]) => { const b = at(r, c); if (!foundCells.has(r + "," + c)) b.style.background = "#9fe0bf"; });
     }
     function score() {
+      const elapsed = over ? finalElapsed : elapsedSec();
       api.setScores([
-        { name: api.config.username, value: found, color: "#2e9d6c" },
+        { name: "Time", value: fmt(elapsed), color: "#2e9d6c" },
         { name: "Found", value: found + "/" + TOTAL, color: "#e67e22" },
+        { name: "Difficulty", value: CAT, color: "#3498db" },
       ]);
     }
 
@@ -182,9 +197,12 @@ Arcade.register({
       score();
       if (found >= TOTAL) {
         over = true;
-        if (api.submitScore) api.submitScore(found); // bank it; the board keeps your highest
-        if (api.celebrate) api.celebrate("🎉 All " + TOTAL + " words found!");
-        api.setStatus("🎉 You found all " + TOTAL + " words, " + api.config.username + "! Restart for a fresh board.");
+        finalElapsed = elapsedSec();
+        if (tick) { clearInterval(tick); tick = null; }
+        if (api.submitScore) api.submitScore(finalElapsed, { cat: CAT }); // time-metric, ranked within its difficulty
+        score();
+        if (api.celebrate) api.celebrate("🎉 All " + TOTAL + " words in " + fmt(finalElapsed) + "!");
+        api.setStatus("🎉 You found all " + TOTAL + " words in " + fmt(finalElapsed) + ", " + api.config.username + "! Restart for a fresh board.");
       }
     }
 
@@ -214,10 +232,13 @@ Arcade.register({
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp);
 
+    t0 = performance.now();
+    tick = setInterval(() => { if (!over) score(); }, 1000);
     score();
-    api.setStatus("Drag across letters to trace a word — any direction, forwards or backwards. Find all " + TOTAL + "! 🔎");
+    api.setStatus("Drag across letters to trace a word — any direction, forwards or backwards. Find all " + TOTAL + " as fast as you can! 🔎");
     return {
       stop() {
+        if (tick) { clearInterval(tick); tick = null; }
         boardEl.removeEventListener("pointerdown", onDown);
         document.removeEventListener("pointermove", onMove);
         document.removeEventListener("pointerup", onUp);
