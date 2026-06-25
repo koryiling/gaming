@@ -11,8 +11,8 @@ Arcade.register({
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: {
-    type: "time", // one ranking, shortest correct solve first; each hint adds +10s
-    categories: [ // difficulty labels shown as a badge on each leaderboard row
+    type: "time", // shortest correct solve first; each hint adds +10s
+    categories: [ // a separate ranking per difficulty, shown Hard → Medium → Easy
       { key: "Hard", label: "🔴 Hard" },
       { key: "Medium", label: "🟠 Medium" },
       { key: "Easy", label: "🟢 Easy" },
@@ -25,7 +25,7 @@ Arcade.register({
     "✏️ Notes lets you pencil in candidates; 💡 Hint reveals one correct cell.",
     "You're on the clock — each 💡 hint adds +10s. Shortest solve tops the board!",
     "Watch your accuracy: 5 wrong entries are allowed — the 6th mistake ends the game.",
-    "Everyone is ranked together, shortest time first — your difficulty shows as a badge on your row.",
+    "Each difficulty has its own ranking — Hard, Medium, then Easy — shortest time first.",
   ],
   options: [
     { key: "diff", label: "Difficulty", type: "select", default: "easy",
@@ -244,7 +244,7 @@ Arcade.register({
       if (tick) { clearInterval(tick); tick = null; }
       const penalty = hints * HINT_PENALTY;
       const total = finalElapsed + penalty;
-      api.submitScore(total, { cat: CAT }); // time-metric leaderboard; cat tags this row with its difficulty badge
+      api.submitScore(total, { cat: CAT }); // time-metric leaderboard, ranked within its difficulty
       if (api.celebrate) api.celebrate("🎉 Solved in " + fmt(total) + "!");
       scoreboard();
       const penaltyMsg = hints ? " + " + penalty + "s for " + hints + " hint" + (hints === 1 ? "" : "s") + " = " + fmt(total) : "";
