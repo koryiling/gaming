@@ -36,7 +36,7 @@ Arcade.register({
     api.board.appendChild(canvas);
     const ctx = canvas.getContext("2d");
 
-    let snake, dir, nextDir, food, score, alive, best = 0;
+    let snake, dir, nextDir, food, score, alive, best = api.loadBest();
 
     function reset() {
       snake = [{ x: (N / 2) | 0, y: (N / 2) | 0 }];
@@ -67,7 +67,7 @@ Arcade.register({
       if (snake.some((s) => s.x === head.x && s.y === head.y)) return die();
       snake.unshift(head);
       if (head.x === food.x && head.y === food.y) {
-        score++; best = Math.max(best, score); updateScore(); placeFood();
+        score++; if (score > best) { best = score; api.saveBest(best); } updateScore(); placeFood();
       } else {
         snake.pop();
       }

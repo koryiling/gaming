@@ -456,6 +456,16 @@
       toast,
       colors: PALETTE,
       el,
+      // persisted personal best for "Best" displays — per game + player, survives across sessions.
+      // loadBest() seeds the value on launch; saveBest(v) renews it when the player beats it.
+      loadBest: () => {
+        const v = Number(localStorage.getItem("mint_best:" + (state.current && state.current.id) + ":" + ((state.config && state.config.username) || "guest")));
+        return Number.isFinite(v) ? v : 0;
+      },
+      saveBest: (v) => {
+        if (!Number.isFinite(v)) return;
+        try { localStorage.setItem("mint_best:" + (state.current && state.current.id) + ":" + ((state.config && state.config.username) || "guest"), String(v)); } catch (e) {}
+      },
     };
     try {
       state.instance = state.current.create(api) || {};

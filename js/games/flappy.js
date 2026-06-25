@@ -30,7 +30,7 @@ Arcade.register({
     // gentler physics + wider pipe spacing so the flyer is easier to control
     const GAP = api.config.options.gap, PIPE_W = 56, SPEED = 2.0, GRAV = 0.34, FLAP = -6.6;
     const BIRD = api.config.options.bird || "🐤";
-    let bird, pipes, score, best = 0, alive, started, raf, frame;
+    let bird, pipes, score, best = api.loadBest(), alive, started, raf, frame;
 
     function reset() {
       bird = { y: H / 2, v: 0, x: W * 0.28 };
@@ -53,7 +53,7 @@ Arcade.register({
         pipes.forEach((p) => (p.x -= SPEED));
         pipes = pipes.filter((p) => p.x + PIPE_W > 0);
         for (const p of pipes) {
-          if (!p.passed && p.x + PIPE_W < bird.x) { p.passed = true; score++; best = Math.max(best, score); updateScore(); }
+          if (!p.passed && p.x + PIPE_W < bird.x) { p.passed = true; score++; if (score > best) { best = score; api.saveBest(best); } updateScore(); }
           if (bird.x + 14 > p.x && bird.x - 14 < p.x + PIPE_W && (bird.y - 14 < p.top || bird.y + 14 > p.top + GAP)) die();
         }
         if (bird.y > H - 14 || bird.y < 0) die();

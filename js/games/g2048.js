@@ -28,7 +28,7 @@ Arcade.register({
       0: "#fdf6cf", 2: "#fef3bf", 4: "#fde98a", 8: "#fcdf5c", 16: "#fad431", 32: "#f6c90e",
       64: "#f0b800", 128: "#e8a600", 256: "#dd9400", 512: "#d08200", 1024: "#c06f00", 2048: "#b25e00",
     };
-    let grid, score = 0, best = 0, over = false, won = false;
+    let grid, score = 0, best = api.loadBest(), over = false, won = false;
 
     const cell = Math.floor(Math.min(400, window.innerWidth - 60) / N) - 10;
     const board = api.el("div", "grid-board");
@@ -78,7 +78,7 @@ Arcade.register({
         t.style.color = v >= 128 ? "#fff" : "#6b4f00";
         t.style.fontSize = (v >= 1000 ? cell * 0.34 : cell * 0.42) + "px";
       }
-      best = Math.max(best, score);
+      if (score > best) { best = score; api.saveBest(best); }
       api.setScores([{ name: api.config.username, value: score, color: "#2e9d6c" }, { name: "Best", value: best, color: "#e67e22" }]);
     }
     function slide(row) {

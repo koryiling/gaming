@@ -35,7 +35,7 @@ Arcade.register({
     const spawnGap = { light: 2000, normal: 1450, heavy: 1050 }[api.config.options.traffic];
     const ENEMY = ["🚙", "🚕", "🚐", "🚚", "🚓"];
 
-    let px, baseSpeed, speed, enemies, score, alive, best = 0;
+    let px, baseSpeed, speed, enemies, score, alive, best = api.loadBest();
     let lastSpawn = 0, roadY = 0, t = 0;
     const keys = {};
 
@@ -85,7 +85,7 @@ Arcade.register({
     function crash() {
       alive = false;
       const secs = Math.floor(t / 1000);
-      best = Math.max(best, secs); updateScore();
+      if (secs > best) { best = secs; api.saveBest(best); } updateScore();
       if (api.submitScore) api.submitScore(secs); // longest survival time ranks highest
       api.setStatus("💥 Crash! You survived <b>" + secs + "s</b>. Press <b>Space</b> or Restart to drive again.");
       draw();
