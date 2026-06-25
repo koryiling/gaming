@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "🔢",
   tagline: "Slide and merge tiles. Can you reach 2048?",
   tags: ["Puzzle", "Solo"],
+  category: "number",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "score" }, // keep each player's highest score, ranked highest → lowest

@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "🕵️",
   tagline: "Sniff out the secret number from higher / lower clues in as few guesses as you can.",
   tags: ["Detective", "Number", "Classic", "Quick", "Solo"],
+  category: "number",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "low" }, // fewest guesses to crack the number ranks highest (per game, not summed)

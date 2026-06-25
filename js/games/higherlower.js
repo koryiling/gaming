@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "🃏",
   tagline: "Will the next card be higher or lower? Ride your streak as far as you dare.",
   tags: ["Cards", "Quick", "Family", "Solo"],
+  category: "number",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "score" }, // your best streak in one game ranks highest → lowest (not summed)

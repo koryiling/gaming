@@ -8,6 +8,7 @@ Arcade.register({
   emoji: "🔢",
   tagline: "Fill the 9×9 grid so every row, column and box holds 1–9 exactly once.",
   tags: ["Number", "Puzzle", "Solo"],
+  category: "number",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: {

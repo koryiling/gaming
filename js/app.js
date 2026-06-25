@@ -208,12 +208,8 @@
     });
 
     $("#user-chip").addEventListener("click", () => {
-      const n = prompt(T("changeName"), state.username);
-      if (n && n.trim().length >= 2) {
-        setUser(n.trim());
-        renderHub();
-        toast(T("nameUpdated"));
-      }
+      // no inline account switching: you must log out (Switch user) first, so each player's records stay clean
+      toast(T("switchHint"));
     });
 
     $("#brand-home").addEventListener("click", () => {
@@ -235,6 +231,7 @@
     { key: "classic", label: "🕹️ Classic" },
     { key: "chinese", label: "🀄 Chinese" },
     { key: "english", label: "🔤 English" },
+    { key: "number", label: "🔢 Number" },
   ];
   function renderNav() {
     const wrap = $("#game-nav");
