@@ -77,7 +77,7 @@ Arcade.register({
       if (vsAI) {
         // beatable AI: when the ball turns toward it, half the time it aims sloppily, and it
         // tracks slower than the player — so sharp angles get past it roughly half the time.
-        if (ball.vx > 0) { if (!aiLock) { aiLock = true; aiErr = Math.random() < 0.5 ? (Math.random() * 2 - 1) * PH : 0; } }
+        if (ball.vx > 0) { if (!aiLock) { aiLock = true; aiErr = Math.random() < 0.62 ? (Math.random() * 2 - 1) * PH * 1.3 : 0; } }
         else aiLock = false;
         const aiCap = pSpeed - 3;
         const target = ball.y + aiErr, center = right.y + PH / 2;

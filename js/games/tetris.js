@@ -25,7 +25,8 @@ Arcade.register({
     const COLS = 10, ROWS = 20;
     const CELL = Math.floor(Math.min(300, window.innerWidth - 80) / COLS);
 
-    // layout: playfield on the left, side panel (Next preview + Rotate button) on the right
+    // layout: playfield on the left, side panel (Next preview + Pause) on the right.
+    // Rotate is keyboard (↑) on desktop and a touch button on phones — see the touch block.
     const wrap = api.el("div", "");
     wrap.style.cssText = "display:flex;gap:16px;align-items:flex-start;justify-content:center";
     const canvas = document.createElement("canvas");
@@ -43,13 +44,10 @@ Arcade.register({
     preview.width = preview.height = 4 * PCELL;
     preview.style.cssText = "background:#fff;border:2px solid var(--mint-300);border-radius:12px;box-shadow:var(--shadow)";
     const pctx = preview.getContext("2d");
-    const rotateBtn = api.el("button", "btn primary", "🔄 Rotate");
-    rotateBtn.style.width = "100%";
     const pauseBtn = api.el("button", "btn", "⏸️ Pause");
     pauseBtn.style.width = "100%";
     side.appendChild(nextLabel);
     side.appendChild(preview);
-    side.appendChild(rotateBtn);
     side.appendChild(pauseBtn);
     wrap.appendChild(side);
     api.board.appendChild(wrap);
@@ -62,7 +60,7 @@ Arcade.register({
     };
     const SPAN = { I: 4, O: 4, T: 3, S: 3, Z: 3, J: 3, L: 3 };
 
-    let grid, piece, next, score, lines, level, over, paused, dropT = null;
+    let grid, piece, next, score, lines, level, over, paused, dropT = null, dropLock = false, softTimer = null;
     const startLevel = api.config.options.level;
     // A paused game is persisted per-username, so each player keeps their own progress:
     // whoever paused can resume on next visit; everyone else starts a normal fresh game.
@@ -134,7 +132,9 @@ Arcade.register({
       }
     }
     function move(dx) { if (!collide(piece.cells, piece.x + dx, piece.y)) piece.x += dx; }
-    function softDrop() {
+    function softDrop(manual) {
+      // a held soft-drop (key or button) won't carry into the next piece — release and press again
+      if (manual && dropLock) return false;
       if (!collide(piece.cells, piece.x, piece.y + 1)) { piece.y++; return true; }
       lock(); return false;
     }
@@ -142,6 +142,7 @@ Arcade.register({
     function lock() {
       piece.cells.forEach(([x, y]) => { const ny = y + piece.y; if (ny >= 0) grid[ny][x + piece.x] = COLORS[piece.type]; });
       clearLines(); spawn(); draw();
+      dropLock = true; // freshly spawned piece won't be slammed down by an already-held soft-drop
     }
     function clearLines() {
       let cleared = 0;
@@ -221,29 +222,38 @@ Arcade.register({
       if (paused) return;
       if (k === "ArrowLeft") { move(-1); draw(); }
       else if (k === "ArrowRight") { move(1); draw(); }
-      else if (k === "ArrowDown") { softDrop(); draw(); }
+      else if (k === "ArrowDown") { if (!e.repeat) dropLock = false; softDrop(true); draw(); } // fresh press re-arms
       else if (k === "ArrowUp") { rotate(); draw(); }
       else if (k === " ") { hardDrop(); }
       else return;
       e.preventDefault();
     }
+    function onKeyUp(e) { if (e.key === "ArrowDown") dropLock = false; }
     window.addEventListener("keydown", onKey);
-    rotateBtn.addEventListener("click", () => {
-      if (over) { reset(); draw(); canvas.focus(); return; }
-      if (paused) return;
-      rotate(); draw(); canvas.focus();
-    });
+    window.addEventListener("keyup", onKeyUp);
     pauseBtn.addEventListener("click", () => { togglePause(); });
 
-    // touch controls — move / soft-drop / hard-drop buttons (rotate is the side button)
+    // touch controls — on phones, rotate is a button too (desktop rotates with ↑).
+    // soft-drop uses a controlled repeat that stops the instant you lift, so a held press
+    // can never carry over and slam the next piece down before you can react.
     if (window.Touch && Touch.enabled) {
       const bar = Touch.bar();
-      const bL = Touch.button("◀"), bR = Touch.button("▶"), bD = Touch.button("▼"), bDrop = Touch.button("⤓");
+      const bL = Touch.button("◀"), bRot = Touch.button("🔄"), bR = Touch.button("▶"), bD = Touch.button("▼"), bDrop = Touch.button("⤓");
       Touch.press(bL, () => { if (!over && !paused) { move(-1); draw(); } }, { repeat: true, interval: 120 });
       Touch.press(bR, () => { if (!over && !paused) { move(1); draw(); } }, { repeat: true, interval: 120 });
-      Touch.press(bD, () => { if (!over && !paused) { softDrop(); draw(); } }, { repeat: true, interval: 70 });
+      Touch.press(bRot, () => { if (!over && !paused) { rotate(); draw(); } });
+      Touch.hold(bD, () => {
+        if (over || paused) return;
+        dropLock = false;                 // fresh press always works
+        softDrop(true); draw();
+        if (softTimer) clearInterval(softTimer);
+        softTimer = setInterval(() => { if (!over && !paused) { softDrop(true); draw(); } }, 80);
+      }, () => {
+        if (softTimer) { clearInterval(softTimer); softTimer = null; }
+        dropLock = false;                 // releasing re-arms soft-drop for the next press
+      });
       Touch.press(bDrop, () => { if (!over && !paused) hardDrop(); });
-      [bL, bR, bD, bDrop].forEach((b) => bar.appendChild(b));
+      [bL, bRot, bR, bD, bDrop].forEach((b) => bar.appendChild(b));
       // stack the play area and the control bar vertically (the board itself is a flex row)
       const col = api.el("div", "");
       col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px";
@@ -254,6 +264,6 @@ Arcade.register({
 
     if (!loadState()) reset();
     draw(); canvas.focus();
-    return { stop() { if (dropT) clearInterval(dropT); window.removeEventListener("keydown", onKey); } };
+    return { stop() { if (dropT) clearInterval(dropT); if (softTimer) clearInterval(softTimer); window.removeEventListener("keydown", onKey); window.removeEventListener("keyup", onKeyUp); } };
   },
 });
