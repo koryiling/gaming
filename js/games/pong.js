@@ -60,6 +60,7 @@ Arcade.register({
       ball = { x: W / 2, y: H / 2, vx: base * (dir || (Math.random() < 0.5 ? 1 : -1)), vy: (Math.random() * 2 - 1) * base * 0.6 };
     }
     resetBall();
+    let aiLock = false, aiErr = 0; // beatable-AI state, re-rolled each rally
 
     function board() {
       api.setScores([
@@ -74,9 +75,14 @@ Arcade.register({
       if (keys["w"]) left.y -= pSpeed;
       if (keys["s"]) left.y += pSpeed;
       if (vsAI) {
-        const center = right.y + PH / 2;
-        if (center < ball.y - 12) right.y += Math.min(pSpeed - 1, ball.y - center);
-        else if (center > ball.y + 12) right.y -= Math.min(pSpeed - 1, center - ball.y);
+        // beatable AI: when the ball turns toward it, half the time it aims sloppily, and it
+        // tracks slower than the player — so sharp angles get past it roughly half the time.
+        if (ball.vx > 0) { if (!aiLock) { aiLock = true; aiErr = Math.random() < 0.5 ? (Math.random() * 2 - 1) * PH : 0; } }
+        else aiLock = false;
+        const aiCap = pSpeed - 3;
+        const target = ball.y + aiErr, center = right.y + PH / 2;
+        if (center < target - 12) right.y += Math.min(aiCap, target - center);
+        else if (center > target + 12) right.y -= Math.min(aiCap, center - target);
       } else {
         if (keys["arrowup"]) right.y -= pSpeed;
         if (keys["arrowdown"]) right.y += pSpeed;

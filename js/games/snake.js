@@ -7,6 +7,7 @@ Arcade.register({
   tags: ["Classic", "Arcade"],
   minPlayers: 1,
   maxPlayers: 1,
+  leaderboard: { type: "score" }, // keep each player's highest score, ranked highest → lowest
   rules: [
     "Steer the snake with the Arrow keys or W/A/S/D.",
     "Eat 🍎 apples to grow longer and score points.",
@@ -74,7 +75,8 @@ Arcade.register({
     }
     function die() {
       alive = false;
-      api.setStatus("💥 Game over — score <b>" + score + "</b>. Press <b>Space</b> or Restart to play again.");
+      if (api.submitScore) api.submitScore(score); // bank the run; the board keeps your highest
+      api.setStatus("💥 Game over — score <b>" + score + "</b> saved to the leaderboard 🏆. Press <b>Space</b> or Restart to play again.");
     }
 
     function draw() {

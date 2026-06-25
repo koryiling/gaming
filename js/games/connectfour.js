@@ -95,6 +95,8 @@ Arcade.register({
       const valid = [];
       for (let c = 0; c < COLS; c++) if (dropRow(c) >= 0) valid.push(c);
       if (!valid.length) return;
+      // beatable AI: about half the time, just drop in a random column instead of playing optimally
+      if (Math.random() < 0.5) { place(valid[(Math.random() * valid.length) | 0]); return; }
       let choice = valid.find((c) => wouldWin(c, 1));           // take the win
       if (choice == null) choice = valid.find((c) => wouldWin(c, 0)); // block their win
       if (choice == null) {

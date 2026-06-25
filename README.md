@@ -1,6 +1,6 @@
 # 🌿 Mint Arcade
 
-A light, mint-green collection of **36 mini games** you can play right in the browser —
+A light, mint-green collection of **37 mini games** you can play right in the browser —
 solo or with friends on the same screen. No build step, no dependencies.
 
 ## ▶ How to run

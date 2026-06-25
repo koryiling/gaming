@@ -92,11 +92,15 @@ Arcade.register({
     function aiMove() {
       if (over) return;
       let best = null, bs = -1;
+      const empties = [];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] === -1) {
+        empties.push([r, c]);
         const s = score(r, c, 1) + Math.random();
         if (s > bs) { bs = s; best = [r, c]; }
       }
       if (!best) return;
+      // beatable AI: about half the time, play a random legal move instead of the best one
+      if (Math.random() < 0.5 && empties.length) best = empties[(Math.random() * empties.length) | 0];
       if (placeStone(best[0], best[1], 1)) return;
       turn = 0; board(); api.setStatus(STONE[0] + " " + names[0] + "'s turn.");
     }

@@ -131,17 +131,28 @@ Arcade.register({
     function aiPlay() {
       if (over) return;
       const hand = hands[1];
-      let i = hand.findIndex((c) => playable(c) && c.r !== EIGHT); // keep wild 8s in reserve
-      if (i < 0) i = hand.findIndex((c) => playable(c));
+      // beatable AI: about half the time play a random playable card (and don't hoard wild 8s)
+      const sloppy = Math.random() < 0.5;
+      let i;
+      if (sloppy) {
+        const opts = []; hand.forEach((c, idx) => { if (playable(c)) opts.push(idx); });
+        i = opts.length ? opts[(Math.random() * opts.length) | 0] : -1;
+      } else {
+        i = hand.findIndex((c) => playable(c) && c.r !== EIGHT); // keep wild 8s in reserve
+        if (i < 0) i = hand.findIndex((c) => playable(c));
+      }
       if (i < 0) { hands[1].push(drawCard()); api.toast("🤖 Computer drew a card"); turn = 0; nextTurnUI(); return; }
       const c = hands[1].splice(i, 1)[0];
       discard.push(c); curRank = c.r; curSuit = c.s;
       if (c.r === EIGHT) {
-        const counts = [0, 0, 0, 0];
-        hands[1].forEach((x) => counts[x.s]++);
-        let best = 0; for (let s = 1; s < 4; s++) if (counts[s] > counts[best]) best = s;
-        curSuit = best;
-        api.toast("🤖 Computer played 8 → " + SUITS[best]);
+        if (sloppy) { curSuit = (Math.random() * 4) | 0; } // sloppy: random suit
+        else {
+          const counts = [0, 0, 0, 0];
+          hands[1].forEach((x) => counts[x.s]++);
+          let best = 0; for (let s = 1; s < 4; s++) if (counts[s] > counts[best]) best = s;
+          curSuit = best;
+        }
+        api.toast("🤖 Computer played 8 → " + SUITS[curSuit]);
       }
       finishTurn();
     }
