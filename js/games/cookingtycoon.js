@@ -120,7 +120,7 @@ Arcade.register({
       b.textContent = ing;
       b.style.cssText =
         "font-size:34px;padding:13px 0;background:#fff;border:2px solid var(--mint-200);border-radius:16px;" +
-        "cursor:pointer;transition:transform .07s,border-color .15s,background .15s";
+        "cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .07s,border-color .15s,background .15s";
       b.addEventListener("click", () => tap(ing, b));
       trayGrid.appendChild(b);
       return b;

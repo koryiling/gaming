@@ -1,4 +1,6 @@
-/* Escape Room — search the room for clues, crack each door's code, escape fastest */
+/* Escape Room — search the room for clues, crack each door's code, escape fastest.
+ * Number tips collect in the notebook on the LEFT; search objects + keypad on the RIGHT.
+ * Pick 5 / 10 / 20 rooms — each length is ranked separately (fastest total time wins). */
 Arcade.register({
   id: "escape",
   name: "Escape Room",
@@ -7,16 +9,23 @@ Arcade.register({
   tags: ["Puzzle", "Detective", "Solo"],
   minPlayers: 1,
   maxPlayers: 1,
-  leaderboard: { type: "time" }, // fastest total escape time ranks highest (lower is better)
+  leaderboard: {
+    type: "time", // fastest total escape time ranks highest (lower is better)
+    categories: [ // a separate ranking per length, shown 20 → 10 → 5
+      { key: "20", label: "🔴 20 questions" },
+      { key: "10", label: "🟠 10 questions" },
+      { key: "5", label: "🟢 5 questions" },
+    ],
+  },
   rules: [
     "Tap objects in the room to search them — some hide a lock-code digit.",
-    "Your notebook remembers every clue you find, in lock order.",
-    "Enter the full code on the keypad and press 🔓 to open the door.",
-    "Escape all rooms as fast as you can — your best time is your score! 🏆",
+    "Your notebook on the left lists every digit you've found, in lock order.",
+    "Type the full code on the keypad and press 🔓 to crack the lock.",
+    "Choose 5, 10 or 20 rooms — each length has its own ranking. Escape fastest to top it! 🏆",
   ],
   options: [
-    { key: "rooms", label: "Rooms", type: "select", default: 3,
-      choices: [{ label: "2 (quick)", value: 2 }, { label: "3", value: 3 }, { label: "4 (long)", value: 4 }] },
+    { key: "count", label: "Questions", type: "select", default: 10,
+      choices: [{ label: "5 questions", value: 5 }, { label: "10 questions", value: 10 }, { label: "20 questions", value: 20 }] },
   ],
 
   create(api) {
@@ -34,7 +43,8 @@ Arcade.register({
     ];
     const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
 
-    const totalRooms = api.config.options.rooms;
+    const totalRooms = api.config.options.count;
+    const CAT = String(totalRooms); // leaderboard category — one ranking per length
     let roomIdx = 0, elapsed = 0, over = false;
     let room, found, entry;
 
@@ -49,9 +59,9 @@ Arcade.register({
       return { code: code.join(""), codeLen, items: shuffle(items) };
     }
 
-    /* ---- layout (responsive: fills phones, capped + centred on desktop) ---- */
+    /* ---- layout (responsive: tips on the LEFT, search + keypad on the RIGHT; wraps on phones) ---- */
     const root = api.el("div", "");
-    root.style.cssText = "width:min(460px,calc(100vw - 36px));display:flex;flex-direction:column;gap:13px;color:var(--ink)";
+    root.style.cssText = "width:min(520px,calc(100vw - 28px));display:flex;flex-direction:column;gap:12px;color:var(--ink)";
 
     // header (room + timer)
     const head = api.el("div", "");
@@ -62,11 +72,13 @@ Arcade.register({
     timeLbl.style.cssText = "font-size:16px;font-variant-numeric:tabular-nums";
     head.appendChild(roomLbl); head.appendChild(timeLbl);
 
-    // objects to search
-    const objGrid = api.el("div", "");
-    objGrid.style.cssText = "display:grid;grid-template-columns:repeat(5,1fr);gap:8px";
+    // body: two columns that wrap on narrow screens
+    const body = api.el("div", "");
+    body.style.cssText = "display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start";
 
-    // notebook
+    // LEFT column — notebook (number tips)
+    const left = api.el("div", "");
+    left.style.cssText = "flex:1 1 150px;min-width:140px";
     const note = api.el("div", "");
     note.style.cssText = "background:var(--mint-50);border:2px solid var(--mint-200);border-radius:14px;padding:11px 13px;min-height:54px";
     const noteHead = api.el("div", "", "📓 Notebook");
@@ -74,22 +86,31 @@ Arcade.register({
     const noteList = api.el("div", "");
     noteList.style.cssText = "display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600";
     note.appendChild(noteHead); note.appendChild(noteList);
+    left.appendChild(note);
 
-    // code display
+    // RIGHT column — objects to search, code display, keypad
+    const right = api.el("div", "");
+    right.style.cssText = "flex:2 1 250px;min-width:228px;display:flex;flex-direction:column;gap:11px";
+
+    const objGrid = api.el("div", "");
+    objGrid.style.cssText = "display:grid;grid-template-columns:repeat(5,1fr);gap:8px";
+
     const display = api.el("div", "");
     display.style.cssText =
       "text-align:center;font-size:30px;font-weight:900;letter-spacing:10px;color:var(--mint-700);" +
       "background:#fff;border:2px solid var(--mint-300);border-radius:14px;padding:12px;min-height:30px;transition:transform .08s";
 
-    // keypad
     const pad = api.el("div", "");
     pad.style.cssText = "display:grid;grid-template-columns:repeat(3,1fr);gap:9px";
 
+    right.appendChild(objGrid);
+    right.appendChild(display);
+    right.appendChild(pad);
+
+    body.appendChild(left);
+    body.appendChild(right);
     root.appendChild(head);
-    root.appendChild(objGrid);
-    root.appendChild(note);
-    root.appendChild(display);
-    root.appendChild(pad);
+    root.appendChild(body);
     api.board.appendChild(root);
 
     const padBtns = [];
@@ -143,7 +164,7 @@ Arcade.register({
         b.textContent = it.obj.e;
         b.style.cssText =
           "font-size:30px;padding:12px 0;background:#fff;border:2px solid var(--mint-200);border-radius:14px;" +
-          "cursor:pointer;transition:transform .07s,border-color .15s,opacity .15s";
+          "cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .07s,border-color .15s,opacity .15s";
         b.addEventListener("click", () => searchObj(it, b));
         objGrid.appendChild(b);
       });
@@ -169,7 +190,7 @@ Arcade.register({
     function renderNote() {
       noteList.innerHTML = "";
       if (!found.length) {
-        const p = api.el("div", "", "Search the objects above to uncover the code…");
+        const p = api.el("div", "", "Search the objects to uncover the code…");
         p.style.cssText = "color:#5c8a73;font-weight:600"; noteList.appendChild(p);
         return;
       }
@@ -196,7 +217,7 @@ Arcade.register({
       over = true;
       clearInterval(timer);
       padBtns.forEach((b) => (b.disabled = true));
-      if (api.submitScore) api.submitScore(elapsed); // fewer seconds ranks higher
+      if (api.submitScore) api.submitScore(elapsed, { cat: CAT }); // fewer seconds ranks higher, within this length
       if (api.celebrate) api.celebrate("🔓 Escaped in " + fmtTime(elapsed) + "!");
       api.setStatus("🎉 You escaped all " + totalRooms + " rooms in " + fmtTime(elapsed) + "! Faster times rank higher 🏆.");
     }

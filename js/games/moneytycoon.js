@@ -145,6 +145,7 @@ Arcade.register({
       row.style.cssText =
         "display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;" +
         "background:#fff;border:2px solid var(--mint-200);border-radius:14px;padding:11px 13px;" +
+        "touch-action:manipulation;-webkit-tap-highlight-color:transparent;" +
         "font-family:inherit;color:var(--ink);transition:border .15s,opacity .15s";
       const em = api.el("span", "", b.emoji);
       em.style.cssText = "font-size:30px;flex:none;width:38px;text-align:center";
