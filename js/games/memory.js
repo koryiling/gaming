@@ -1,4 +1,5 @@
-/* Memory Match — 1 to 4 players, turn based */
+/* Memory Match — 1 to 4 players, turn based.
+ * Solo runs are timed and ranked like Sudoku: fastest clear per difficulty tops the board. */
 Arcade.register({
   id: "memory",
   name: "Memory Match",
@@ -7,11 +8,21 @@ Arcade.register({
   tags: ["Cards", "Memory"],
   minPlayers: 1,
   maxPlayers: 4,
+  leaderboard: {
+    type: "time", // solo: fastest clear first; each difficulty ranked on its own (like Sudoku)
+    categories: [
+      { key: "12", label: "🔴 12 pairs" },
+      { key: "10", label: "🟠 10 pairs" },
+      { key: "8", label: "🟡 8 pairs" },
+      { key: "6", label: "🟢 6 pairs" },
+    ],
+  },
   rules: [
     "On your turn, flip two cards.",
     "Match a pair → you score a point and go again.",
     "No match → cards flip back and it's the next player's turn.",
-    "When all pairs are found, the highest score wins!",
+    "Solo: you're on the clock — clear all pairs as fast as you can!",
+    "Each difficulty (6/8/10/12 pairs) has its own fastest-time ranking. ⏱️",
   ],
   options: [
     {
@@ -24,8 +35,15 @@ Arcade.register({
     const symbols = ["🍏","🍓","🥑","🍋","🍉","🐢","🐸","🦎","🌵","🍀","🦜","🐬","🦋","🐝","🌿","🍄"];
     const pairs = api.config.options.pairs;
     const names = api.config.players;
+    const solo = names.length === 1;
+    const CAT = String(pairs); // leaderboard category = difficulty
     const scores = names.map(() => 0);
     let turn = 0, busy = false, found = 0;
+
+    // ---- timer (solo only) ----
+    let t0 = 0, tick = null, started = false, finalElapsed = 0, over = false;
+    function elapsedSec() { return Math.max(0, Math.round((performance.now() - t0) / 1000)); }
+    function fmt(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
 
     const deck = [];
     for (let i = 0; i < pairs; i++) { deck.push(symbols[i], symbols[i]); }
@@ -55,12 +73,20 @@ Arcade.register({
     function hide(c) { c.textContent = ""; c.style.background = "linear-gradient(180deg,var(--mint-400),var(--mint-600))"; }
 
     function board() {
-      api.setScores(names.map((n, i) => ({
-        name: n, value: scores[i], color: api.colors[i], turn: i === turn && found < pairs,
-      })));
+      const chips = names.map((n, i) => ({
+        name: n, value: scores[i], color: api.colors[i], turn: !solo && i === turn && found < pairs,
+      }));
+      if (solo) chips.push({ name: "Time", value: fmt(over ? finalElapsed : elapsedSec()), color: "#e67e22" });
+      api.setScores(chips);
+    }
+    function startTimer() {
+      if (!solo || started) return;
+      started = true; t0 = performance.now();
+      tick = setInterval(() => { if (!over) board(); }, 1000);
     }
     function flip(c, idx) {
-      if (busy || c.textContent || c === first) return;
+      if (over || busy || c.textContent || c === first) return;
+      startTimer(); // solo clock starts on first flip
       show(c);
       if (!first) { first = c; return; }
       busy = true;
@@ -69,7 +95,7 @@ Arcade.register({
         first.disabled = c.disabled = true;
         first = null; busy = false;
         if (found === pairs) return finish();
-        api.setStatus("✨ Match! " + names[turn] + " goes again.");
+        if (!solo) api.setStatus("✨ Match! " + names[turn] + " goes again.");
       } else {
         const a = first; first = null;
         setTimeout(() => {
@@ -79,17 +105,24 @@ Arcade.register({
       }
     }
     function finish() {
+      over = true;
+      if (tick) { clearInterval(tick); tick = null; }
+      if (solo) {
+        finalElapsed = elapsedSec();
+        board();
+        if (api.submitScore) api.submitScore(finalElapsed, { cat: CAT }); // fastest time per difficulty
+        if (api.celebrate) api.celebrate("🎉 Cleared in " + fmt(finalElapsed) + "!");
+        api.setStatus("🎉 All " + pairs + " pairs in " + fmt(finalElapsed) + "! Great memory, " + names[0] + ". Restart to beat your time.");
+        return;
+      }
       const max = Math.max(...scores);
       const champs = names.filter((_, i) => scores[i] === max);
-      api.setStatus(
-        names.length === 1
-          ? "🎉 All pairs found! Great memory, " + names[0] + "."
-          : (champs.length > 1 ? "🤝 Tie between " + champs.join(" & ") + "!" : "🏆 " + champs[0] + " wins with " + max + " pairs!")
-      );
+      if (api.celebrate) api.celebrate(champs.length > 1 ? "🤝 It's a tie!" : "🏆 " + champs[0] + " wins!");
+      api.setStatus(champs.length > 1 ? "🤝 Tie between " + champs.join(" & ") + "!" : "🏆 " + champs[0] + " wins with " + max + " pairs!");
     }
 
     board();
-    api.setStatus(names.length > 1 ? names[0] + " starts — flip two cards." : "Flip two cards to find a pair!");
-    return { stop() {} };
+    api.setStatus(solo ? "Flip two cards to find a pair — the clock starts on your first flip! ⏱️" : names[0] + " starts — flip two cards.");
+    return { stop() { over = true; if (tick) { clearInterval(tick); tick = null; } } };
   },
 });
