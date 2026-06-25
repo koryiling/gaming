@@ -17,7 +17,7 @@
 
   const UI = {
     en: {
-      switchUser: "Switch user",
+      switchUser: "Log out",
       loginSubtitle: "10+ mini games. Bring your friends. Pick a name to begin.",
       usernameLabel: "Your username",
       usernamePh: "e.g. MintNinja",
@@ -53,7 +53,7 @@
       nameMin: "Please enter at least 2 characters.",
       changeName: "Change your username:",
       nameUpdated: "Name updated ✔",
-      switchHint: "To switch account, tap “Switch user” to log out first.",
+      switchHint: "To switch account, tap “Log out” first.",
       noMatch: "No games match that search 🌱",
       scoresCleared: "Scores cleared for this game 🗑",
       noScores: "No scores yet 🌱",
@@ -72,7 +72,7 @@
       tag: { All: "All", Classic: "Classic", Arcade: "Arcade", Puzzle: "Puzzle", Solo: "Solo", Duel: "Duel", Quick: "Quick", Family: "Family", Word: "Word", Number: "Number", Reflex: "Reflex", Strategy: "Strategy" },
     },
     ms: {
-      switchUser: "Tukar pengguna",
+      switchUser: "Log keluar",
       loginSubtitle: "10+ permainan mini. Bawa rakan anda. Pilih nama untuk bermula.",
       usernameLabel: "Nama pengguna anda",
       usernamePh: "cth. MintNinja",
@@ -108,7 +108,7 @@
       nameMin: "Sila masukkan sekurang-kurangnya 2 aksara.",
       changeName: "Tukar nama pengguna anda:",
       nameUpdated: "Nama dikemas kini ✔",
-      switchHint: "Untuk tukar akaun, tekan “Tukar pengguna” untuk log keluar dahulu.",
+      switchHint: "Untuk tukar akaun, tekan “Log keluar” dahulu.",
       noMatch: "Tiada permainan sepadan dengan carian itu 🌱",
       scoresCleared: "Skor permainan ini dikosongkan 🗑",
       noScores: "Belum ada skor 🌱",
@@ -127,7 +127,7 @@
       tag: { All: "Semua", Classic: "Klasik", Arcade: "Arked", Puzzle: "Teka-teki", Solo: "Solo", Duel: "Duel", Quick: "Pantas", Family: "Keluarga", Word: "Perkataan", Number: "Nombor", Reflex: "Refleks", Strategy: "Strategi" },
     },
     zh: {
-      switchUser: "切换用户",
+      switchUser: "登出",
       loginSubtitle: "10+ 款迷你游戏。呼朋唤友，输入名字即可开始。",
       usernameLabel: "你的用户名",
       usernamePh: "例如 MintNinja",
@@ -163,7 +163,7 @@
       nameMin: "请至少输入 2 个字符。",
       changeName: "修改你的用户名：",
       nameUpdated: "用户名已更新 ✔",
-      switchHint: "要换账号？请先点「切换用户」登出。",
+      switchHint: "要换账号？请先点「登出」。",
       noMatch: "没有匹配的游戏 🌱",
       scoresCleared: "已清除此游戏的分数 🗑",
       noScores: "暂无分数 🌱",
