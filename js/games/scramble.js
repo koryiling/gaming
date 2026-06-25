@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "🔤",
   tagline: "Letters are jumbled — unscramble the hidden word before the clock idea fades.",
   tags: ["Word", "Puzzle", "Solo"],
+  category: "english",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "score" }, // your best single game ranks highest → lowest (not summed)

@@ -18,7 +18,8 @@
   const T = (key, vars) => (window.I18n ? I18n.t(key, vars) : key);
   const TAG = (label) => (window.I18n ? I18n.tag(label) : label);
   function gameText(def) {
-    const tr = window.I18n && I18n.game(def.id);
+    // Chinese-category games are authored in Chinese and always shown in Chinese — never localized
+    const tr = def.category === "chinese" ? null : (window.I18n && I18n.game(def.id));
     return {
       name: (tr && tr.name) || def.name,
       tagline: (tr && tr.tagline) || def.tagline,
@@ -35,6 +36,7 @@
     config: null,         // { players:[names], options:{}, username }
     instance: null,       // running game instance { stop() }
     activeFilter: "All",
+    activeCategory: "All",
   };
 
   /* ---------- storage ---------- */
@@ -227,6 +229,33 @@
     return T("nmPlayers", { min: def.minPlayers, max: def.maxPlayers });
   }
 
+  // top-level category navigation: Classic / Chinese / English (+ a reserved tab for later)
+  const NAV = [
+    { key: "All", label: "🎮 All" },
+    { key: "classic", label: "🕹️ Classic" },
+    { key: "chinese", label: "🀄 Chinese" },
+    { key: "english", label: "🔤 English" },
+  ];
+  function renderNav() {
+    const wrap = $("#game-nav");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    NAV.forEach((n) => {
+      const b = el("button", "nav-tab" + (n.key === state.activeCategory ? " active" : ""), n.label);
+      b.addEventListener("click", () => {
+        state.activeCategory = n.key;
+        renderNav();
+        renderCards();
+      });
+      wrap.appendChild(b);
+    });
+    // reserved slot — a new section is coming here later; disabled for now
+    const soon = el("button", "nav-tab soon", "✨ More soon");
+    soon.disabled = true;
+    soon.title = "Coming soon";
+    wrap.appendChild(soon);
+  }
+
   function renderFilters() {
     const cats = ["All"];
     GAMES.forEach((g) => (g.tags || []).forEach((t) => !cats.includes(t) && cats.push(t)));
@@ -248,11 +277,13 @@
     const q = ($("#game-search").value || "").toLowerCase();
     grid.innerHTML = "";
     const list = GAMES.filter((g) => {
+      const cat = g.category || "classic"; // games without a category are Classic
+      const matchNav = state.activeCategory === "All" || cat === state.activeCategory;
       const matchCat = state.activeFilter === "All" || (g.tags || []).includes(state.activeFilter);
       const gt = gameText(g);
       const hay = (g.name + " " + g.tagline + " " + gt.name + " " + gt.tagline).toLowerCase();
       const matchText = !q || hay.includes(q);
-      return matchCat && matchText;
+      return matchNav && matchCat && matchText;
     });
     if (!list.length) {
       grid.appendChild(el("p", "", T("noMatch")));
@@ -275,6 +306,7 @@
   }
 
   function renderHub() {
+    renderNav();
     renderFilters();
     renderCards();
   }

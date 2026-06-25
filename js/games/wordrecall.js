@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "📝",
   tagline: "A word flashes for a moment — burn it into memory, then type it back from recall.",
   tags: ["Word", "Memory", "Solo"],
+  category: "english",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "score" }, // your best single game ranks highest → lowest (scores don't add up)

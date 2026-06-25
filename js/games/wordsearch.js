@@ -8,6 +8,7 @@ Arcade.register({
   emoji: "🔎",
   tagline: "Hunt hidden words in a grid of letters — drag across to trace them.",
   tags: ["Word", "Puzzle", "Solo"],
+  category: "english",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: {

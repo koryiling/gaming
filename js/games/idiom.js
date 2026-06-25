@@ -5,25 +5,26 @@
  * touch or mouse — no Chinese keyboard. */
 Arcade.register({
   id: "idiom",
-  name: "Chinese Idioms",
+  name: "看图猜成语",
   emoji: "🀄",
-  tagline: "Guess the Chinese idiom (chéngyǔ) from an emoji clue.",
+  tagline: "根据表情符号线索猜出中文成语。",
   tags: ["Word", "Puzzle", "Solo"],
+  category: "chinese",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "score" }, // ranks by the most idioms solved in one game, highest → lowest
   rules: [
-    "An emoji clue hints at a 4-character Chinese idiom (chéngyǔ).",
-    "Pick the matching idiom from the choices — you get 3 guesses.",
-    "After a wrong guess, tap 💡 Hint to reveal its meaning (once per idiom) — the pinyin stays hidden so it's not a giveaway.",
-    "Fewer guesses and no hint = more points.",
-    "Clear all the rounds to finish — the leaderboard ranks the most idioms solved in one game.",
+    "表情符号线索暗示一个四字成语（chéngyǔ）。",
+    "从选项中选出对应的成语——你有 3 次机会。",
+    "猜错后，点击 💡 提示可显示释义（每题一次）——拼音不显示，以免太容易。",
+    "猜的次数越少、不用提示，得分越高。",
+    "完成所有回合即结束——排行榜按一局中猜对最多成语排名。",
   ],
   options: [
-    { key: "rounds", label: "Rounds", type: "select", default: 15,
+    { key: "rounds", label: "回合数", type: "select", default: 15,
       choices: [{ label: "5", value: 5 }, { label: "10", value: 10 }, { label: "15", value: 15 }] },
-    { key: "choices", label: "Choices", type: "select", default: 4,
-      choices: [{ label: "Easy (3)", value: 3 }, { label: "Normal (4)", value: 4 }, { label: "Hard (6)", value: 6 }] },
+    { key: "choices", label: "选项数", type: "select", default: 4,
+      choices: [{ label: "简单（3）", value: 3 }, { label: "普通（4）", value: 4 }, { label: "困难（6）", value: 6 }] },
   ],
 
   create(api) {

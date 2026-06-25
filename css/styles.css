@@ -92,6 +92,13 @@ body{
 .pill{padding:8px 14px;border-radius:999px;border:1.5px solid var(--mint-300);background:#fff;
   cursor:pointer;font-weight:600;font-size:13px;color:var(--mint-700)}
 .pill.active{background:var(--mint-600);color:#fff;border-color:var(--mint-600)}
+/* top-level category navigation bar (Classic / Chinese / English + reserved) */
+.game-nav{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.nav-tab{padding:9px 18px;border-radius:999px;border:2px solid var(--mint-200);background:#fff;cursor:pointer;
+  font-weight:800;font-size:14px;color:var(--mint-700);font-family:inherit;transition:transform .08s,box-shadow .2s,background .2s}
+.nav-tab:hover{background:var(--mint-50)}
+.nav-tab.active{background:linear-gradient(180deg,var(--mint-500),var(--mint-600));color:#fff;border-color:var(--mint-600);box-shadow:var(--shadow)}
+.nav-tab.soon{opacity:.55;cursor:not-allowed;border-style:dashed;color:var(--ink-soft);background:#fff}
 
 .game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
 .game-card{background:var(--card);border-radius:var(--radius);padding:20px;cursor:pointer;

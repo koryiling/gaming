@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "🔤",
   tagline: "Guess the hidden word in ten tries. Green = right spot, yellow = wrong spot.",
   tags: ["Word", "Puzzle", "Solo"],
+  category: "english",
   minPlayers: 1,
   maxPlayers: 1,
   leaderboard: { type: "low" }, // fastest correct solve (seconds) ranks highest; per game, not summed

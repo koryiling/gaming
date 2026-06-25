@@ -5,6 +5,7 @@ Arcade.register({
   emoji: "🔤",
   tagline: "Guess the hidden word one letter at a time before you run out of tries.",
   tags: ["Word", "Memory"],
+  category: "english",
   minPlayers: 1,
   maxPlayers: 4,
   leaderboard: { type: "score" }, // most words found in one game ranks highest → lowest (not summed)
